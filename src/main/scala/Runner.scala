@@ -1,8 +1,7 @@
 package masterleagueapi
-package net
 
 object Runner {
-  import Api._
+  import api.Api._
   import scala.concurrent.duration._
 
   def main(args: Array[String]): Unit = {
@@ -13,7 +12,7 @@ object Runner {
       case Right(Left(thr)) => List(s"error: $thr")
       case Right(Right(m)) => m.toList.map { case (id, hero) => s"Hero #$id is ${hero.name}" }
     }) foreach println
-
+    /*
     println("MATCHES:")
     (matches(1.seconds).unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
@@ -63,5 +62,13 @@ object Runner {
       case Right(Right(m)) => m.toList.map { case (id, map) => s"Map #$id is ${map.name}" }
     }) foreach println
 
+    import java.time.ZoneOffset
+    println("CALENDAR:")
+    (calendar(1.seconds).unsafeAttemptRun match {
+      case Left(err) => List(s"error: $err")
+      case Right(Left(thr)) => List(s"error: $thr")
+      case Right(Right(l)) => l.map { entry => s"an event occurs at ${entry.date.atOffset(ZoneOffset.UTC)}" }
+    }) foreach println
+*/
   }
 }

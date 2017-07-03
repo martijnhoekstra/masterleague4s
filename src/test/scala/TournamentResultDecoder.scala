@@ -606,7 +606,6 @@ class TournamentResultDecoderSpec extends Specification {
 
   def parse35 = {
     val parseresult = decode[APIResult[TournamentEntry]](page1string)
-    println(parseresult)
     parseresult.isRight must beTrue
   }
 

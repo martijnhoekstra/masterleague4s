@@ -1,5 +1,4 @@
 package masterleagueapi
-package net
 
 import java.nio.channels.AsynchronousChannelGroup
 import java.util.concurrent.Executors

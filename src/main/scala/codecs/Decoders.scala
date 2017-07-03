@@ -49,8 +49,11 @@ object Decoders {
   implicit val pick = deriveDecoder[Pick]
   implicit val draft = deriveDecoder[Draft]
   implicit val matchEntry = deriveDecoder[MatchEntry]
+  implicit val liveStream = deriveDecoder[LiveStream]
+  implicit val calendarMatch = deriveDecoder[CalendarMatch]
+  implicit val calendarEntry = deriveDecoder[CalendarEntry]
 
-  implicit def decodeAPICall[A <: APIEntry: Decoder] = Decoder.forProduct4("count", "next", "previous", "results")(APIResult.apply[A] _)
+  implicit def decodeAPICall[A: Decoder] = Decoder.forProduct4("count", "next", "previous", "results")(APIResult.apply[A] _)
   implicit def decodePlainArray[A: Decoder] = Decoder.decodeList[A]
 
 }
