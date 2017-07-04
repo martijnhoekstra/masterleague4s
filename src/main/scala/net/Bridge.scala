@@ -13,7 +13,7 @@ import fs2.util.Catchable
 
 object Bridge {
   def getRequests(res: APIResult[_]): Stream[Task, HttpRequest[Task]] =
-    Stream.emits(res.next.toList).map(uri => HttpRequest.get[Task](uri))
+    Stream.emits(res.next.toList).map(HttpRequest.get[Task])
 
   def getEntries[F[_], E](client: HttpClient[F])(implicit ctch: Catchable[F], decoder: Decoder[E]): HttpRequest[F] => Stream[F, Attempt[APIResult[E]]] =
     r => {
