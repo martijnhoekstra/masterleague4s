@@ -59,7 +59,7 @@ object Api {
     }.map(_.toEither)
   }
 
-  def runSingleArray[A <: PlainEntry](uri: Uri)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+  def runSingleArray[A <: APIEntry](uri: Uri)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
     val tresponsestream = for {
       client <- http.client[Task]()
     } yield client.request(HttpRequest.get[Task](uri))

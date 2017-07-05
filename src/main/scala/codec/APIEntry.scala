@@ -26,16 +26,12 @@ case class MatchEntry(id: Long, date: Instant, patch: Long, tournament: Long, st
   def secondpick = drafts(1)
   def firstpickwins = drafts(0) == winner
 }
+case class MapEntry(id: Long, name: String, url: Uri) extends APIEntry
+case class RegionEntry(id: Long, name: String) extends APIEntry
+case class PatchEntry(id: Long, name: String, from_date: LocalDate, to_date: LocalDate) extends APIEntry //"2017-05-15"
 
 //Calendar entries have no id, so they can't extend APIEntry
 case class LiveStream(country: String, caster: String, url: Uri, viewers: Int)
 case class CalendarMatch(datetime: Instant, name: String, format: String, left_team: Long, right_team: Long)
 case class CalendarEntry(date: Instant, stage: Long, is_live: Boolean, streams: List[LiveStream], matches: List[CalendarMatch])
 
-sealed trait PlainEntry {
-  def id: Long
-}
-//the following endpoint doesn't follow the usual pattern, but are a plain array
-case class MapEntry(id: Long, name: String, url: Uri) extends PlainEntry
-case class RegionEntry(id: Long, name: String) extends PlainEntry
-case class PatchEntry(id: Long, name: String, from_date: LocalDate, to_date: LocalDate) extends PlainEntry //"2017-05-15"
