@@ -1,6 +1,8 @@
 # Masterleague4s
 A scala client and crawler for the masterleague API
 
+[![Build Status](https://travis-ci.org/martijnhoekstra/masterleague4s.svg?branch=master)](https://travis-ci.org/martijnhoekstra/masterleague4s)
+
 ## Status
 This project is currently in pre-release, where it servers to scratch a personal itch. Creating issues on this repo with feature
 requests is a good way to see if we cn also make this project scratch your itch.
