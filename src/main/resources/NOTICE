@@ -1,0 +1,19 @@
+Copyright Martijn Hoekstra 2017
+Source at https://github.com/martijnhoekstra/masterleague4s
+If you got this library through sonatype, there are source jars for the particular version there.
+
+Licensed under the GPLv3 (see: LICENSE file, or https://www.gnu.org/licenses/gpl-3.0.en.html), which long legal story non-legal short means
+
+* You are free to use this software for whatever you want, in source code form or executable form, whatever, go nuts
+
+BUT
+
+IF you distribute this software, software based on this software, or software that uses this software as a dependency to other people
+
+THEN
+* You MUST do so under the same terms
+* You MUST include the license
+* You MUST include or give a link to the source of the software you distribute (not only this)
+
+
+The astute observer may have noticed that if you *don't* distribute anything to anyone else, then you don't have to do any of that stuff.

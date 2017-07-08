@@ -1,6 +1,40 @@
 name := "MLApi"
 
-version := "0.0.1"
+licenses := Seq("GPLv3" -> url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
+
+homepage := Some(url("https://github.com/martijnhoekstra/masterleague4s"))
+
+scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/martijnhoekstra/masterleague4s"),
+    "scm:git@github.com:martijnhoekstra/masterleague4s.git"
+  )
+)
+
+developers := List(
+  Developer(
+    id    = "MartijnHoekstra",
+    name  = "Martijn Hoekstra",
+    email = "Martijnhoekstra@gmail.com",
+    url   = url("https://github.com/martijnhoekstra")
+  )
+)
+
+publishMavenStyle := true
+
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+
+organization := "com.heroestools"
+
+publishArtifact in Test := false
+
+version := "0.0.2"
 
 scalaVersion := "2.12.2"
 
@@ -61,6 +95,7 @@ val circeDependencies = List(
 ).map(_ % circeVersion)
 
 libraryDependencies ++= List(
-  "com.spinoco" %% "fs2-http" % "0.1.7",
-  "co.fs2" %% "fs2-cats" % "0.3.0",
-  "org.specs2" %% "specs2-core" % "3.9.1" % "test") ++ circeDependencies
+  "com.spinoco" %% "fs2-http"    % "0.1.7",
+  "co.fs2"      %% "fs2-cats"    % "0.3.0",
+  "org.specs2"  %% "specs2-core" % "3.9.1" % "test") ++
+  circeDependencies
