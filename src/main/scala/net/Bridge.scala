@@ -19,9 +19,9 @@ object Bridge {
     r => {
       client.request(r).flatMap { resp =>
         {
-          implicit val bodydecoder = circeDecoder[APIResult[E]](decodeAPICall)
-          val fbody = resp.bodyAs[APIResult[E]]
-          Stream.eval(fbody)
+          implicit val bodyDecoder = circeDecoder[APIResult[E]](decodeAPICall)
+          val fBody = resp.bodyAs[APIResult[E]]
+          Stream.eval(fBody)
         }
       }
     }

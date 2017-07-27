@@ -12,16 +12,16 @@ object Decoders {
   implicit val uri: Decoder[Uri] = new Decoder[Uri] {
     final def apply(c: HCursor): Decoder.Result[Uri] =
       for {
-        uristring <- c.as[String]
-        uri <- Uri.parse(uristring).toEither.left.map(err => DecodingFailure(err.message, c.history))
+        uriString <- c.as[String]
+        uri <- Uri.parse(uriString).toEither.left.map(err => DecodingFailure(err.message, c.history))
       } yield uri
   }
 
   implicit val localDate: Decoder[LocalDate] = new Decoder[LocalDate] {
     final def apply(c: HCursor): Decoder.Result[LocalDate] = {
       for {
-        datestring <- c.as[String]
-        date <- Try(LocalDate.parse(datestring)).toEither.left.map(err => DecodingFailure(err.getMessage + " at " + c.focus.map(_.noSpaces), c.history))
+        dateString <- c.as[String]
+        date <- Try(LocalDate.parse(dateString)).toEither.left.map(err => DecodingFailure(err.getMessage + " at " + c.focus.map(_.noSpaces), c.history))
       } yield date
     }
   }
@@ -29,8 +29,8 @@ object Decoders {
   implicit val instant: Decoder[Instant] = new Decoder[Instant] {
     final def apply(c: HCursor): Decoder.Result[Instant] = {
       for {
-        datestring <- c.as[String]
-        date <- Try(Instant.parse(datestring)).toEither.left.map(err => DecodingFailure(err.getMessage + " at " + c.focus.map(_.noSpaces), c.history))
+        dateString <- c.as[String]
+        date <- Try(Instant.parse(dateString)).toEither.left.map(err => DecodingFailure(err.getMessage + " at " + c.focus.map(_.noSpaces), c.history))
       } yield date
     }
   }
