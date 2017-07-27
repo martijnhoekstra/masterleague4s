@@ -1,4 +1,4 @@
-name := "MLApi"
+name := "masterleague4s"
 
 licenses := Seq("GPLv3" -> url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
 
@@ -86,6 +86,8 @@ scalacOptions ++=  List(
   "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
 )
 
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
 val circeVersion = "0.8.0"
 
 val circeDependencies = List(
@@ -94,8 +96,29 @@ val circeDependencies = List(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
-libraryDependencies ++= List(
-  "com.spinoco" %% "fs2-http"    % "0.1.7",
-  "co.fs2"      %% "fs2-cats"    % "0.3.0",
-  "org.specs2"  %% "specs2-core" % "3.9.1" % "test") ++
-  circeDependencies
+val testDependencies = List(
+  "org.specs2" %% "specs2-core" % "3.9.1"
+).map(_ % "test")
+
+val fs2httpDependencies = List(
+  "com.spinoco" %% "fs2-http" % "0.1.7",
+  "co.fs2"      %% "fs2-cats" % "0.3.0"
+)
+
+val catsDependencies = List(
+  "org.typelevel" %% "cats-free" % "0.9.0"
+)
+
+val matryoshkaDependencies = List(
+  "com.slamdata" %% "matryoshka-core" % "0.18.3"
+)
+
+val simulacrumDependencies = List("com.github.mpilquist" %% "simulacrum" % "0.10.0")
+
+libraryDependencies ++= 
+  circeDependencies      ++
+  fs2httpDependencies    ++
+  matryoshkaDependencies ++
+  catsDependencies       ++
+  simulacrumDependencies ++
+  testDependencies
