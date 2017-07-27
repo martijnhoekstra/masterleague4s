@@ -4,6 +4,7 @@ package fix
 import cats.free.Cofree
 
 object IdAnnotated {
+  import Roles.Role
   type HeroId = Cofree[HeroF, Long]
   type PlayerId = Cofree[({ type l[A] = PlayerF[Long, Long, Role] })#l, Long]
   type TournamentEntryId = Cofree[({ type l[A] = TournamentEntryF[A, A] })#l, Long]

@@ -86,6 +86,8 @@ scalacOptions ++=  List(
   "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
 )
 
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
 val circeVersion = "0.8.0"
 
 val circeDependencies = List(
@@ -111,9 +113,12 @@ val matryoshkaDependencies = List(
   "com.slamdata" %% "matryoshka-core" % "0.18.3"
 )
 
+val simulacrumDependencies = List("com.github.mpilquist" %% "simulacrum" % "0.10.0")
+
 libraryDependencies ++= 
   circeDependencies      ++
   fs2httpDependencies    ++
   matryoshkaDependencies ++
   catsDependencies       ++
+  simulacrumDependencies ++
   testDependencies

@@ -40,23 +40,23 @@ case class LiveStream(country: String, caster: String, url: Uri, viewers: Int)
 case class CalendarMatchF[A, B](datetime: Instant, name: String, format: String, left_team: A, right_team: B)
 case class CalendarEntryF[A, B](date: Instant, stage: A, is_live: Boolean, streams: List[LiveStream], matches: List[B])
 
-sealed trait Role {
-  def name: String
-}
-case object Warrior extends Role {
-  val name = "Warrior"
-}
-case object Support extends Role {
-  val name = "Support"
-}
-case object Assassin extends Role {
-  val name = "Assassin"
-}
-case object Specialist extends Role {
-  val name = "Specialist"
-}
-
 object Roles {
+
+  sealed trait Role {
+    def name: String
+  }
+  case object Warrior extends Role {
+    val name = "Warrior"
+  }
+  case object Support extends Role {
+    val name = "Support"
+  }
+  case object Assassin extends Role {
+    val name = "Assassin"
+  }
+  case object Specialist extends Role {
+    val name = "Specialist"
+  }
 
   val roles = scala.collection.immutable.Map(
     1 -> Warrior,

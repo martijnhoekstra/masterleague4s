@@ -2,6 +2,7 @@ package masterleagueapi
 package fix
 
 object Deep {
+  import Roles.Role
   type Hero = HeroF[Role]
   type Team = TeamEntryF[Region]
   type Player = PlayerF[Team, Region, Role]
