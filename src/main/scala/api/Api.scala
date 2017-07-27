@@ -17,10 +17,11 @@ import cats.implicits._
 import scala.concurrent.duration.FiniteDuration
 import masterleagueapi.net._
 import net.Bridge._
+import shapeless.tag.@@
 
 object Api {
 
-  def streamAPI[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, APIResult[A]]] = {
+  def streamAPI[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, APIResult[A]]] = {
     type ErrOr[AA] = Either[Err, AA]
     type ErrOrApi[AA] = ErrOr[APIResult[AA]]
 
@@ -39,12 +40,12 @@ object Api {
     Stream.force(tx)
   }
 
-  def streamAPIResults[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, A]] = streamAPI(uri, delay)(decoder).flatMap {
+  def streamAPIResults[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, A]] = streamAPI(uri, delay)(decoder).flatMap {
     case Right(ar) => Stream.emits(ar.results.map(Right(_)))
     case Left(err) => Stream(Left(err))
   }
 
-  def apiToMap[A <: APIEntry](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+  def apiToMap[A <: APIEntry](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
     val results = streamAPIResults(uri, delay)(decoder)
     results.runFold(Attempt.successful(Map.empty[Long, A])) {
       case (res, next) => for {
@@ -54,7 +55,7 @@ object Api {
     }.map(_.toEither)
   }
 
-  def apiToList[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, List[A]]] = {
+  def apiToList[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, List[A]]] = {
     val results = streamAPIResults(uri, delay)(decoder)
 
     results.runFold(Attempt.successful(List.empty[A])) {
