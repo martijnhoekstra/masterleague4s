@@ -20,18 +20,24 @@ import net.Bridge._
 
 object Api {
 
-  def streamAPI[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, APIResult[A]]] = Stream.force(http.client[Task]().map { client =>
-    {
-      val initialrequest = Attempt.successful(HttpRequest.get[Task](uri)).toEither
-      def results2requests(eapiresult: Either[Err, APIResult[A]]): Stream[Task, Either[Err, HttpRequest[Task]]] = eapiresult.traverse(getRequests)
-      def reqs2as(ereq: Either[Err, HttpRequest[Task]]): Stream[Task, Either[Err, APIResult[A]]] = ereq match {
-        case Right(request) => getEntries(client)(implicitly[Catchable[Task]], decoder)(request).map(_.toEither)
-        case Left(err) => Stream(Left(err))
-      }
+  def streamAPI[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, APIResult[A]]] = {
+    type ErrOr[AA] = Either[Err, AA]
+    type ErrOrApi[AA] = ErrOr[APIResult[AA]]
 
-      Crawler.crawl(initialrequest, reqs2as, results2requests, time.sleep[Task](delay))
+    val tx: Task[Stream[Task, ErrOrApi[A]]] = http.client[Task]().map { client =>
+      {
+        def results2uri(eapiresult: ErrOrApi[A]): Stream[Task, ErrOr[Uri]] = eapiresult.traverse(getRequests)
+
+        def uris2as(ereq: ErrOr[Uri]): Stream[Task, ErrOrApi[A]] = ereq match {
+          case Right(uri) => getEntries(client)(implicitly[Catchable[Task]], decoder)(uri).map(_.toEither)
+          case Left(err) => Stream(Left(err))
+        }
+        Crawler.crawl(Attempt.successful(uri).toEither, uris2as, results2uri, time.sleep[Task](delay))
+      }
     }
-  })
+
+    Stream.force(tx)
+  }
 
   def streamAPIResults[A](uri: Uri, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, A]] = streamAPI(uri, delay)(decoder).flatMap {
     case Right(ar) => Stream.emits(ar.results.map(Right(_)))
