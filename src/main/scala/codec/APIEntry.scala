@@ -28,7 +28,7 @@ case class MatchEntry(id: Long, date: Instant, patch: Long, tournament: Long, st
 }
 case class MapEntry(id: Long, name: String, url: Uri) extends APIEntry
 case class RegionEntry(id: Long, name: String) extends APIEntry
-case class PatchEntry(id: Long, name: String, from_date: LocalDate, to_date: LocalDate) extends APIEntry //"2017-05-15"
+case class PatchEntry(id: Long, name: String, from_date: LocalDate, to_date: LocalDate) extends APIEntry
 
 //Calendar entries have no id, so they can't extend APIEntry
 case class LiveStream(country: String, caster: String, url: Uri, viewers: Int)

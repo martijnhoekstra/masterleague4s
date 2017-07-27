@@ -10,13 +10,17 @@ import codec.APIResult
 import codec.Decoders._
 import scodec.Attempt
 import fs2.util.Catchable
+import spinoco.protocol.http.Uri
+//import shapeless.tag.@@
 
 object Bridge {
-  def getRequests(res: APIResult[_]): Stream[Task, HttpRequest[Task]] =
-    Stream.emits(res.next.toList).map(HttpRequest.get[Task])
+  def getRequests(res: APIResult[_]): Stream[Task, Uri] =
+    Stream.emits(res.next.toList) //.map(HttpRequest.get[Task])
 
-  def getEntries[F[_], E](client: HttpClient[F])(implicit ctch: Catchable[F], decoder: Decoder[E]): HttpRequest[F] => Stream[F, Attempt[APIResult[E]]] =
-    r => {
+  def getEntries[F[_], E](client: HttpClient[F])(implicit ctch: Catchable[F], decoder: Decoder[E]): Uri => Stream[F, Attempt[APIResult[E]]] =
+    uri => {
+      val r = HttpRequest.get[F](uri)
+
       client.request(r).flatMap { resp =>
         {
           implicit val bodyDecoder = circeDecoder[APIResult[E]](decodeAPICall)
