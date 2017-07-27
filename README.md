@@ -8,7 +8,7 @@ This project is currently in pre-release, where it serves to scratch a personal 
 requests is a good way to see if we cn also make this project scratch your itch. Creating issues with nags, annoyances and other bugbears
 is also encouraged.
 
-The current (and first) pre-release is version 0.0.2, released for scala 2.12.x only.
+The current (and first) pre-release is version 0.0.2, released for scala 2.12.x only. Future releases will be under the artifact ID masterleague4s
 
 ## Installing
 
