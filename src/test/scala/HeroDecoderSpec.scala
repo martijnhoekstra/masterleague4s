@@ -44,9 +44,9 @@ case class Draft(team: Long, is_winner: Boolean, bans: List[Long], picks: List[P
 case class MatchEntry(id: Long, date: Instant, patch: Long, tournament: Long, stage: Long, round: String, series: Long, game: Int, map: Long, url: Uri, drafts: List[Draft]) extends APIEntry {
   def winner = drafts.find(_.is_winner).get
   def loser = drafts.find(d => !d.is_winner).get
-  def firstpick = drafts(0)
-  def secondpick = drafts(1)
-  def firstpickwins = drafts(0) == winner
+  def firstPick = drafts(0)
+  def secondPick = drafts(1)
+  def firstPickWins = drafts(0) == winner
 }
 
 sealed trait PlainEntry {
