@@ -1,15 +1,16 @@
-package masterleagueapi
+package masterleague4s
 
 object Runner {
   import api.Api._
   import scala.concurrent.duration._
 
   def main(args: Array[String]): Unit = {
+
     println("HEROES:")
     (heroes(1.seconds).unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, hero) => s"Hero #$id is ${hero.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, hero) => s"Hero #$id is ${hero._2.name}" }
     }) foreach println
 
     println("MATCHES:")
@@ -23,42 +24,42 @@ object Runner {
     (players(1.seconds).unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, player) => s"Player #$id is ${player.nickname}" }
+      case Right(Right(m)) => m.toList.map { case (id, player) => s"Player #$id is ${player._2.nickname}" }
     }) foreach println
 
     println("TOURNAMENTS:")
     (tournaments(1.seconds).unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny._2.name}" }
     }) foreach println
 
     println("TEAMS:")
     (teams(1.seconds).unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, team) => s"Team #$id is ${team.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, team) => s"Team #$id is ${team._2.name}" }
     }) foreach println
 
     println("REGIONS:")
     (regions.unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, region) => s"Region #$id is ${region.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, region) => s"Region #$id is ${region._2.name}" }
     }) foreach println
 
     println("PATCHES:")
     (patches.unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, patch) => s"Patch #$id is ${patch.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, patch) => s"Patch #$id is ${patch._2.name}" }
     }) foreach println
 
     println("MAPS:")
     (maps.unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, map) => s"Map #$id is ${map.name}" }
+      case Right(Right(m)) => m.toList.map { case (id, map) => s"Map #$id is ${map._2.name}" }
     }) foreach println
 
     import java.time.ZoneOffset

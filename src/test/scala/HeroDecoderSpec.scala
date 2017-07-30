@@ -1,9 +1,11 @@
-package masterleagueapi
+package masterleague4s
 package codec
 
 import io.circe.parser.decode
 import org.specs2._
-import Decoders._
+import masterleague4s.data._
+import IdAnnotated._
+import FDecoders._
 
 class HeroDecoderSpec extends Specification {
   def is = s2"""
@@ -25,7 +27,7 @@ class HeroDecoderSpec extends Specification {
 
   def parseAbathur = {
 
-    decode[HeroEntry](abathurString).isRight must beTrue
+    decode[HeroId](abathurString).isRight must beTrue
   }
 
 }

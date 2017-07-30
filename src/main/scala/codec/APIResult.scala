@@ -1,4 +1,4 @@
-package masterleagueapi
+package masterleague4s
 package codec
 
 import spinoco.protocol.http.Uri

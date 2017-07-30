@@ -1,4 +1,4 @@
-package masterleagueapi
+package masterleague4s
 package javaapi
 
 import java.time.Instant
