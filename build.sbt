@@ -36,7 +36,7 @@ publishArtifact in Test := false
 
 version := "0.0.3-SNAPSHOT"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 scalacOptions ++=  List(
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.

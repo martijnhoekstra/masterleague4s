@@ -1,9 +1,9 @@
-package masterleagueapi
+package masterleague4s
 package net
 package filters
 
 import spinoco.protocol.http.Uri.Query
-import fix.Roles._
+import data.Roles._
 
 case class MatchFilter(map: Option[Long], tournament: Option[Long], patch: Option[Long], player: Option[Long])
 

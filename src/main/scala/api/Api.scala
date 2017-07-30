@@ -1,4 +1,4 @@
-package masterleagueapi
+package masterleague4s
 package api
 
 import io.circe.Decoder
@@ -6,8 +6,8 @@ import fs2._
 import fs2.util.Catchable
 import spinoco.fs2.http
 import http._
-import masterleagueapi.codec._
-import masterleagueapi.codec.Decoders._
+import masterleague4s.codec._
+import masterleague4s.codec.FDecoders._
 import fs2.interop.cats._
 import scodec.Attempt
 import spinoco.protocol.http._
@@ -15,9 +15,11 @@ import DefaultResources._
 import scodec.Err
 import cats.implicits._
 import scala.concurrent.duration.FiniteDuration
-import masterleagueapi.net._
+import masterleague4s.net._
 import net.Bridge._
 import shapeless.tag.@@
+import masterleague4s.data._
+import IdAnnotated._
 
 object Api {
 
@@ -27,9 +29,9 @@ object Api {
 
     val tx: Task[Stream[Task, ErrOrApi[A]]] = http.client[Task]().map { client =>
       {
-        def results2uri(eapiresult: ErrOrApi[A]): Stream[Task, ErrOr[Uri]] = eapiresult.traverse(getRequests)
+        def results2uri(eapiresult: ErrOrApi[A]): Stream[Task, ErrOr[Uri @@ A]] = eapiresult.traverse(getRequests)
 
-        def uris2as(ereq: ErrOr[Uri]): Stream[Task, ErrOrApi[A]] = ereq match {
+        def uris2as(ereq: ErrOr[Uri @@ A]): Stream[Task, ErrOrApi[A]] = ereq match {
           case Right(uri) => getEntries(client)(implicitly[Catchable[Task]], decoder)(uri).map(_.toEither)
           case Left(err) => Stream(Left(err))
         }
@@ -45,13 +47,14 @@ object Api {
     case Left(err) => Stream(Left(err))
   }
 
-  def apiToMap[A <: APIEntry](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+  def apiToMap[A: WithId](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
     val results = streamAPIResults(uri, delay)
+    val idprovider = implicitly[WithId[A]]
     results.runFold(Attempt.successful(Map.empty[Long, A])) {
       case (res, next) => for {
         have <- res
         res <- Attempt.fromEither(next)
-      } yield have.updated(res.id, res)
+      } yield have.updated(idprovider.id(res), res)
     }.map(_.toEither)
   }
 
@@ -66,7 +69,8 @@ object Api {
     }.map(_.toEither)
   }
 
-  def runSingleArray[A <: APIEntry](uri: Uri @@ A)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+  def runSingleArray[A: WithId](uri: Uri @@ A)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+    val idprovider = implicitly[WithId[A]]
     val tresponsestream = for {
       client <- http.client[Task]()
     } yield client.request(HttpRequest.get[Task](uri))
@@ -81,20 +85,20 @@ object Api {
       case (res, next) => for {
         have <- res
         batch <- next
-      } yield (have ++ batch.map(r => (r.id, r)).toMap)
+      } yield (have ++ batch.map(r => (idprovider.id(r), r)).toMap)
     }.map(_.toEither)
 
   }
 
-  def matches(wait: FiniteDuration) = apiToMap[MatchEntry](Endpoints.matches, wait)
-  def heroes(wait: FiniteDuration) = apiToMap[HeroEntry](Endpoints.heroes, wait)
-  def players(wait: FiniteDuration) = apiToMap[PlayerEntry](Endpoints.players, wait)
-  def tournaments(wait: FiniteDuration) = apiToMap[TournamentEntry](Endpoints.tournaments, wait)
-  def calendar(wait: FiniteDuration): Task[Either[Err, List[CalendarEntry]]] = apiToList[CalendarEntry](Endpoints.calendar, wait)
-  def teams(wait: FiniteDuration) = apiToMap[TeamEntry](Endpoints.teams, wait)
+  def matches(wait: FiniteDuration) = apiToMap[MatchId](Endpoints.matches, wait)
+  def heroes(wait: FiniteDuration) = apiToMap[HeroId](Endpoints.heroes, wait)
+  def players(wait: FiniteDuration) = apiToMap[PlayerId](Endpoints.players, wait)
+  def tournaments(wait: FiniteDuration) = apiToMap[TournamentId](Endpoints.tournaments, wait)
+  def calendar(wait: FiniteDuration): Task[Either[Err, List[CalendarEntryId]]] = apiToList[CalendarEntryId](Endpoints.calendar, wait)
+  def teams(wait: FiniteDuration) = apiToMap[TeamId](Endpoints.teams, wait)
 
-  val regions = runSingleArray[RegionEntry](Endpoints.regions)
-  val patches = runSingleArray[PatchEntry](Endpoints.patches)
-  val maps = runSingleArray[MapEntry](Endpoints.maps)
+  val regions = runSingleArray[RegionId](Endpoints.regions)
+  val patches = runSingleArray[PatchId](Endpoints.patches)
+  val maps = runSingleArray[BattlegroundId](Endpoints.maps)
 
 }

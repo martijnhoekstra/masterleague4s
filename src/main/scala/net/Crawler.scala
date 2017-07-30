@@ -1,4 +1,4 @@
-package masterleagueapi
+package masterleague4s
 package net
 
 import fs2.Stream
