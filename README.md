@@ -61,7 +61,7 @@ comprehensive doc.
 
 ## Java users
 
-On a best-effort basis we expose an API that is hopefully Java friendly. You can find this API as [the Api object in the javaapi package]https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.3/masterleague4s_2.12-0.0.3-javadoc.jar/!/masterleague4s/javaapi/Api$.html)
+On a best-effort basis we expose an API that is hopefully Java friendly. You can find this API as [the Api object in the javaapi package](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.3/masterleague4s_2.12-0.0.3-javadoc.jar/!/masterleague4s/javaapi/Api$.html)
 
 ## License
 
