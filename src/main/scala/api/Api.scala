@@ -19,13 +19,13 @@ import masterleague4s.net._
 import net.Bridge._
 import shapeless.tag.@@
 import masterleague4s.data._
-import IdAnnotated._
+import Serialized._
 
 object Api {
 
-  def streamAPI[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, APIResult[A]]] = {
+  def streamAPI[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, UriApiResult[A]]] = {
     type ErrOr[AA] = Either[Err, AA]
-    type ErrOrApi[AA] = ErrOr[APIResult[AA]]
+    type ErrOrApi[AA] = ErrOr[UriApiResult[AA]]
 
     val tx: Task[Stream[Task, ErrOrApi[A]]] = http.client[Task]().map { client =>
       {
@@ -90,15 +90,15 @@ object Api {
 
   }
 
-  def matches(wait: FiniteDuration) = apiToMap[MatchId](Endpoints.matches, wait)
-  def heroes(wait: FiniteDuration) = apiToMap[HeroId](Endpoints.heroes, wait)
-  def players(wait: FiniteDuration) = apiToMap[PlayerId](Endpoints.players, wait)
-  def tournaments(wait: FiniteDuration) = apiToMap[TournamentId](Endpoints.tournaments, wait)
+  def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
+  def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)
+  def players(wait: FiniteDuration) = apiToMap[IdPlayer](Endpoints.players, wait)
+  def tournaments(wait: FiniteDuration) = apiToMap[IdTournament](Endpoints.tournaments, wait)
   def calendar(wait: FiniteDuration): Task[Either[Err, List[CalendarEntryId]]] = apiToList[CalendarEntryId](Endpoints.calendar, wait)
-  def teams(wait: FiniteDuration) = apiToMap[TeamId](Endpoints.teams, wait)
+  def teams(wait: FiniteDuration) = apiToMap[IdTeam](Endpoints.teams, wait)
 
-  val regions = runSingleArray[RegionId](Endpoints.regions)
-  val patches = runSingleArray[PatchId](Endpoints.patches)
-  val maps = runSingleArray[BattlegroundId](Endpoints.maps)
+  val regions = runSingleArray[IdRegion](Endpoints.regions)
+  val patches = runSingleArray[IdPatch](Endpoints.patches)
+  val maps = runSingleArray[IdBattleground](Endpoints.maps)
 
 }

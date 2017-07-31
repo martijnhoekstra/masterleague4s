@@ -4,7 +4,7 @@ package codec
 import io.circe.parser.decode
 import org.specs2._
 import masterleague4s.data._
-import IdAnnotated._
+import Serialized._
 import FDecoders._
 class TournamentResultDecoderSpec extends Specification {
   def is = s2"""
@@ -606,7 +606,7 @@ class TournamentResultDecoderSpec extends Specification {
 }"""
 
   def parse35 = {
-    val parseResult = decode[APIResult[TournamentId]](page1string)
+    val parseResult = decode[UriApiResult[IdTournament]](page1string)
     parseResult.isRight must beTrue
   }
 
