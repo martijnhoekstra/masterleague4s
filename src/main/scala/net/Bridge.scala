@@ -18,8 +18,8 @@ object Bridge {
   def getRequests[A](res: UriApiResult[A]): Stream[Task, Uri @@ A] =
     Stream.emits(res.next.toList)
 
-  def getEntries[F[_], E](client: HttpClient[F])(implicit ctch: Catchable[F], decoder: Decoder[E]): Uri @@ E => Stream[F, Attempt[APIResultF[E, Uri @@ E]]] =
-    uri => {
+  def getEntries[F[_], E](uri: Uri @@ E)(implicit ctch: Catchable[F], decoder: Decoder[E]): HttpClient[F] => Stream[F, Attempt[APIResultF[E, Uri @@ E]]] =
+    client => {
       val r = HttpRequest.get[F](uri)
 
       client.request(r).flatMap { resp =>
@@ -30,4 +30,19 @@ object Bridge {
         }
       }
     }
+
+  def unfoldApiResult[A: Decoder](client: HttpClient[Task], uri: Uri @@ A): Stream[Task, scodec.Attempt[APIResultF[A, Int]]] = {
+    import matryoshka.data.Fix
+    type UriHoleTask[U] = Task[APIResultF[A, U]]
+    type ApiResult = Fix[UriHoleTask]
+    implicit val bodyDecoder = circeDecoder[UriApiResult[A]](decodeAPICall)
+    implicit val c = implicitly[Catchable[Task]]
+    implicit val f = APIResultF.apiResultFunctor
+
+    val r = HttpRequest.get[Task](uri)
+    for {
+      response <- client.request(r)
+      bodyAttempt <- Stream.eval(response.bodyAs[UriApiResult[A]](bodyDecoder, c))
+    } yield bodyAttempt.map(x => f.bimap(x)(id => id, uri => unfoldApiResult(client, uri)))
+  }
 }

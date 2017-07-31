@@ -32,7 +32,7 @@ object Api {
         def results2uri(eapiresult: ErrOrApi[A]): Stream[Task, ErrOr[Uri @@ A]] = eapiresult.traverse(getRequests)
 
         def uris2as(ereq: ErrOr[Uri @@ A]): Stream[Task, ErrOrApi[A]] = ereq match {
-          case Right(uri) => getEntries(client)(implicitly[Catchable[Task]], decoder)(uri).map(_.toEither)
+          case Right(uri) => getEntries(uri)(implicitly[Catchable[Task]], decoder)(client).map(_.toEither)
           case Left(err) => Stream(Left(err))
         }
         Crawler.crawl(Attempt.successful(uri).toEither, uris2as, results2uri, time.sleep[Task](delay))
