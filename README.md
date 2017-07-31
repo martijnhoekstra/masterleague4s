@@ -3,6 +3,8 @@ A scala client and crawler for the masterleague API
 
 [![Build Status](https://travis-ci.org/martijnhoekstra/masterleague4s.svg?branch=master)](https://travis-ci.org/martijnhoekstra/masterleague4s)
 
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/masterleague4s/Lobby)
+
 ## Status
 This project is currently in pre-release, where it serves to scratch a personal itch. Creating issues on this repo with feature
 requests is a good way to see if we cn also make this project scratch your itch. Creating issues with nags, annoyances and other
