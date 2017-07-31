@@ -31,18 +31,24 @@ object Bridge {
       }
     }
 
-  def unfoldApiResult[A: Decoder](client: HttpClient[Task], uri: Uri @@ A): Stream[Task, scodec.Attempt[APIResultF[A, Int]]] = {
-    import matryoshka.data.Fix
-    type UriHoleTask[U] = Task[APIResultF[A, U]]
-    type ApiResult = Fix[UriHoleTask]
+  import matryoshka.data.Fix
+  type UriHoleStream[U, A] = Stream[Task, APIResultF[A, U]]
+  type ApiResult[A] = Fix[({ type l[a] = UriHoleStream[a, A] })#l]
+
+  def unfoldApiResult[A: Decoder](client: HttpClient[Task], uri: Uri @@ A): ApiResult[A] = {
     implicit val bodyDecoder = circeDecoder[UriApiResult[A]](decodeAPICall)
     implicit val c = implicitly[Catchable[Task]]
     implicit val f = APIResultF.apiResultFunctor
 
     val r = HttpRequest.get[Task](uri)
-    for {
+    val one: Stream[Task, UriApiResult[A]] = for {
       response <- client.request(r)
-      bodyAttempt <- Stream.eval(response.bodyAs[UriApiResult[A]](bodyDecoder, c))
-    } yield bodyAttempt.map(x => f.bimap(x)(id => id, uri => unfoldApiResult(client, uri)))
+      body <- Stream.eval(response.bodyAs[UriApiResult[A]](bodyDecoder, c)).map(_.require)
+
+    } yield body
+
+    new Fix[({ type l[a] = UriHoleStream[a, A] })#l](one.map(res => f.bimap(res)(id => id, uri => unfoldApiResult(client, uri))))
+
   }
+
 }
