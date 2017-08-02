@@ -22,18 +22,18 @@ object UnfoldApiResult {
 
   type RunnableResult[F[_], A] = Fix[({ type l[a] = RunnableApiStream[F, a, A] })#l]
 
-  def unfoldApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A): RunnableResult[F, A] = {
+  def unfoldApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A, sleep: Stream[F, Unit]): RunnableResult[F, A] = {
     val d = implicitly[Decoder[A]]
     implicit val bodyDecoder = circeDecoder[UriApiResult[A]](decodeAPICall)
     implicit val c = implicitly[Catchable[F]]
     implicit val f = APIResultF.apiResultFunctor
 
-    def urimap(uriresult: UriApiResult[A]): APIResultF[A, RunnableResult[F, A]] = f.bimap(uriresult)(id => id, uri => unfoldApiResult(uri)(c, d))
+    def urimap(uriresult: UriApiResult[A]): APIResultF[A, RunnableResult[F, A]] = f.bimap(uriresult)(id => id, uri => unfoldApiResult(uri, sleep)(c, d))
     def streammap(str: Stream[F, UriApiResult[A]]): Stream[F, APIResultF[A, RunnableResult[F, A]]] = str.map(urimap)
 
     val r = HttpRequest.get[F](uri)
     val one: HttpClient[F] => Stream[F, UriApiResult[A]] = (client: HttpClient[F]) => for {
-      response <- client.request(r)
+      response <- (sleep >> client.request(r))
       body <- Stream.eval(response.bodyAs[UriApiResult[A]](bodyDecoder, c)).map(_.require)
     } yield body
 
@@ -43,9 +43,9 @@ object UnfoldApiResult {
     Fix[Unfix](ClientRunnable.instances.map(lifted)(streammap))
   }
 
-  def linearizeApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A): ClientRunnable[F, Stream[F, APIResultF[A, Unit]]] = {
+  def linearizeApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A, sleep: Stream[F, Unit]): ClientRunnable[F, Stream[F, APIResultF[A, Unit]]] = {
     val apif = APIResultF.apiResultFunctor
-    val init = unfoldApiResult(uri)
+    val init = unfoldApiResult(uri, sleep)
 
     val run = (client: HttpClient[F]) => {
 

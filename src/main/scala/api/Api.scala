@@ -20,6 +20,8 @@ import net.Bridge._
 import shapeless.tag.@@
 import masterleague4s.data._
 import Serialized._
+import scala.concurrent.duration._
+import fs2.util.Async
 
 object Api {
 
@@ -89,14 +91,14 @@ object Api {
     }.map(_.toEither)
   }
 
-  def tmapRunnable = for {
-    stream <- UnfoldApiResult.linearizeApiResult[Task, IdTournament](Endpoints.tournaments)
+  def tmapRunnable[F[_]: Async] = for {
+    stream <- UnfoldApiResult.linearizeApiResult(Endpoints.tournaments, time.sleep[F](1.seconds))
   } yield stream.runFold(Map.empty[Long, TournamentF[Long, (Long, TournamentStage)]])((m, page) => {
     page.results.foldLeft(m) { case (mm, (l, tourny)) => mm.updated(l, tourny) }
   })
 
-  def tournamentMap = for {
-    client <- http.client[Task]()
+  def tournamentMap[F[_]: Async] = for {
+    client <- http.client[F]()
     map <- tmapRunnable.run(client)
   } yield map
 

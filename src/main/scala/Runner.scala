@@ -2,10 +2,11 @@ package masterleague4s
 
 object Runner {
   import api.Api._
-  //import scala.concurrent.duration._
+  import fs2.Task
+  import DefaultResources._
 
   def main(args: Array[String]): Unit = {
-    (tournamentMap.unsafeAttemptRun match {
+    (tournamentMap[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny.name}" }
     }) foreach println
