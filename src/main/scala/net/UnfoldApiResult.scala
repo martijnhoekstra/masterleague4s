@@ -53,22 +53,18 @@ object UnfoldApiResult2 {
 
     val run = (client: HttpClient[F]) => {
 
-      val unfolded = Stream.unfold(init)((f: UnfoldApiResult.RunnableResult[F, A]) => {
-        val runnable = f.unFix
+      def rec(fix: RunnableResult[F, A]): Stream[F, APIResultF[A, Unit]] = {
+        val runnable = fix.unFix
         val pages = runnable.run(client) // sleep here
-        val shallowpages = pages.flatMap(page => {
-          apif.bimap(page)(id => id, _ => ())
+        val these: Stream[F, APIResultF[A, Unit]] = pages.map(page => apif.bimap(page)(id => id, _ => ()))
+        //'t was nice knowing you, stack
+        val those: Stream[F, APIResultF[A, Unit]] = pages.flatMap(page => page.next match {
+          case None => Stream.empty
+          case Some(n) => rec(n)
         })
-        //we're done if the stream is empty
-        //that means running it though
-        //that's uncool
-        shallowpages.foo
-        //need an Option[ShallowPage-or-stream-thereof, Fix[_]]
-
-        ???
-      })
-
-      unfolded
+        these ++ those
+      }
+      rec(init)
     }
 
     ClientRunnable.lift(run)
