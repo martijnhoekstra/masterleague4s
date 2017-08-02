@@ -87,8 +87,18 @@ object Api {
         batch <- next
       } yield (have ++ batch.map(r => (idprovider.id(r), r)).toMap)
     }.map(_.toEither)
-
   }
+
+  def tmapRunnable = for {
+    stream <- UnfoldApiResult.linearizeApiResult[Task, IdTournament](Endpoints.tournaments)
+  } yield stream.runFold(Map.empty[Long, TournamentF[Long, (Long, TournamentStage)]])((m, page) => {
+    page.results.foldLeft(m) { case (mm, (l, tourny)) => mm.updated(l, tourny) }
+  })
+
+  def tournamentMap = for {
+    client <- http.client[Task]()
+    map <- tmapRunnable.run(client)
+  } yield map
 
   def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
   def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)
