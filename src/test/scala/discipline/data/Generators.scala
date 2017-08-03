@@ -27,7 +27,7 @@ object Generators {
 
   implicit val arbQuery: Arbitrary[Query] = Arbitrary(for {
     params <- arbitrary[List[(String, String)]]
-  } yield Query(params))
+  } yield Query((params.groupBy(_._1).toList.collect { case (_, (k, v) :: _) => (k, v) }).sortBy(_._1)))
 
   implicit val arbUri: Arbitrary[Uri] = Arbitrary(for {
     scheme <- arbitrary[HttpScheme.Value]

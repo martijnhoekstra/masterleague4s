@@ -1,9 +1,10 @@
 package masterleague4s
 package instances
+package data
 
 import cats.laws.discipline.TraverseTests
-import data.HeroF
-import data.HeroF._
+import masterleague4s.data.HeroF
+import masterleague4s.data.HeroF._
 import Generators._
 import cats.implicits._
 
