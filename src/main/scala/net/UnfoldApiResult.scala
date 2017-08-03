@@ -12,9 +12,7 @@ import data.Serialized._
 import codec.CirceSupport._
 import codec.FDecoders._
 import fs2.util.Catchable
-
-//import cats._
-//import cats.implicits._
+import cats.implicits._
 
 object UnfoldApiResult {
   type StreamRunnable[F[_], A] = ClientRunnable[F, Stream[F, A]]
@@ -23,18 +21,15 @@ object UnfoldApiResult {
   type RunnableResult[F[_], A] = Fix[({ type l[a] = RunnableApiStream[F, a, A] })#l]
 
   def unfoldApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A, sleep: Stream[F, Unit]): RunnableResult[F, A] = {
-    val d = implicitly[Decoder[A]]
     implicit val bodyDecoder = circeDecoder[UriApiResult[A]](decodeAPICall)
-    implicit val c = implicitly[Catchable[F]]
-    implicit val f = APIResultF.apiResultFunctor
 
-    def urimap(uriresult: UriApiResult[A]): APIResultF[A, RunnableResult[F, A]] = f.bimap(uriresult)(id => id, uri => unfoldApiResult(uri, sleep)(c, d))
+    def urimap(uriresult: UriApiResult[A]): APIResultF[A, RunnableResult[F, A]] = uriresult.bimap(id => id, uri => unfoldApiResult(uri, sleep))
     def streammap(str: Stream[F, UriApiResult[A]]): Stream[F, APIResultF[A, RunnableResult[F, A]]] = str.map(urimap)
 
     val r = HttpRequest.get[F](uri)
     val one: HttpClient[F] => Stream[F, UriApiResult[A]] = (client: HttpClient[F]) => for {
       response <- (sleep >> client.request(r))
-      body <- Stream.eval(response.bodyAs[UriApiResult[A]](bodyDecoder, c)).map(_.require)
+      body <- Stream.eval(response.bodyAs[UriApiResult[A]]).map(_.require)
     } yield body
 
     val lifted = ClientRunnable.lift(one)
@@ -44,16 +39,15 @@ object UnfoldApiResult {
   }
 
   def linearizeApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A, sleep: Stream[F, Unit]): ClientRunnable[F, Stream[F, APIResultF[A, Unit]]] = {
-    val apif = APIResultF.apiResultFunctor
     val init = unfoldApiResult(uri, sleep)
 
     val run = (client: HttpClient[F]) => {
 
       def rec(fix: RunnableResult[F, A]): Stream[F, APIResultF[A, Unit]] = {
         val runnable = fix.unFix
-        val pages = runnable.run(client) // sleep here
-        val these: Stream[F, APIResultF[A, Unit]] = pages.map(page => apif.bimap(page)(id => id, _ => ()))
-        //'t was nice knowing you, stack
+        val pages = runnable.run(client)
+        val these: Stream[F, APIResultF[A, Unit]] = pages.map(_.bimap(id => id, _ => ()))
+        //'t was nice knowing you, stack (TODO: Stack-safety)
         val those: Stream[F, APIResultF[A, Unit]] = pages.flatMap(page => page.next match {
           case None => Stream.empty
           case Some(n) => rec(n)
