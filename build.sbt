@@ -97,7 +97,10 @@ val circeDependencies = List(
 ).map(_ % circeVersion)
 
 val testDependencies = List(
-  "org.specs2" %% "specs2-core" % "3.9.1"
+  "org.specs2"     %% "specs2-core"       % "3.9.4",
+  "org.specs2"     %% "specs2-scalacheck" % "3.9.4",
+  "org.typelevel"  %% "cats-laws"         % "0.9.0",
+  "org.typelevel"  %% "discipline"        % "0.7.3"
 ).map(_ % "test")
 
 val fs2httpDependencies = List(
