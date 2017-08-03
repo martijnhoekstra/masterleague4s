@@ -6,47 +6,31 @@ object Runner {
   import DefaultResources._
 
   def main(args: Array[String]): Unit = {
-    (tournamentMap[Task].unsafeAttemptRun match {
+    println("TOURNAMENTS:")
+    (allTournaments[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny.name}" }
     }) foreach println
 
-    /*
-    println("HEROES:")
-    (heroes(1.seconds).unsafeAttemptRun match {
-      case Left(err) => List(s"error: $err")
-      case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, hero) => s"Hero #$id is ${hero._2.name}" }
-    }) foreach println
-
     println("MATCHES:")
-    (matches(1.seconds).unsafeAttemptRun match {
+    (allMatches[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
-      case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, _) => s"Match #$id" }
+      case Right(m) => m.toList.map { case (id, _) => s"Match #$id" }
     }) foreach println
 
+    /*
     println("PLAYERS:")
-    (players(1.seconds).unsafeAttemptRun match {
+    (allPlayers[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
-      case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, player) => s"Player #$id is ${player._2.nickname}" }
-    }) foreach println
-
-    println("TOURNAMENTS:")
-    (tournaments(1.seconds).unsafeAttemptRun match {
-      case Left(err) => List(s"error: $err")
-      case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny._2.name}" }
+      case Right(m) => m.toList.map { case (id, player) => s"Player #$id is ${player.nickname}" }
     }) foreach println
 
     println("TEAMS:")
-    (teams(1.seconds).unsafeAttemptRun match {
+    (allTeams[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
-      case Right(Left(thr)) => List(s"error: $thr")
-      case Right(Right(m)) => m.toList.map { case (id, team) => s"Team #$id is ${team._2.name}" }
+      case Right(m) => m.toList.map { case (id, team) => s"Team #$id is ${team.name}" }
     }) foreach println
-
+  
     println("REGIONS:")
     (regions.unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")

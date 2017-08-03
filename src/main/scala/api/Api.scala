@@ -91,16 +91,26 @@ object Api {
     }.map(_.toEither)
   }
 
-  def tmapRunnable[F[_]: Async] = for {
-    stream <- UnfoldApiResult.linearizeApiResult(Endpoints.tournaments, time.sleep[F](1.seconds))
-  } yield stream.runFold(Map.empty[Long, TournamentF[Long, (Long, TournamentStage)]])((m, page) => {
-    page.results.foldLeft(m) { case (mm, (l, tourny)) => mm.updated(l, tourny) }
-  })
+  def runToMap[F[_]: Async, A: Decoder, K, V](uri: Uri @@ A)(k: A => K, v: A => V): F[Map[K, V]] = {
 
-  def tournamentMap[F[_]: Async] = for {
-    client <- http.client[F]()
-    map <- tmapRunnable.run(client)
-  } yield map
+    def gather = for {
+      stream <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1.seconds))
+    } yield stream.runFold(Map.empty[K, V])((m, page) => {
+      //TODO: key and value projections can and should be pushed deeper into the stack
+      page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
+    })
+
+    for {
+      client <- http.client[F]()
+      map <- gather.run(client)
+    } yield map
+  }
+
+  def allTournaments[F[_]: Async] = runToMap(Endpoints.tournaments)(t => t._1, t => t._2)
+  def allMatches[F[_]: Async] = runToMap(Endpoints.matches)(t => t._1, t => t._2)
+  def allHeroes[F[_]: Async] = runToMap(Endpoints.heroes)(t => t._1, t => t._2)
+  def allPlayers[F[_]: Async] = runToMap(Endpoints.players)(t => t._1, t => t._2)
+  def allTeams[F[_]: Async] = runToMap(Endpoints.teams)(t => t._1, t => t._2)
 
   def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
   def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)
