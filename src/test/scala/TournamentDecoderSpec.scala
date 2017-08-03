@@ -4,7 +4,7 @@ package codec
 import io.circe.parser.decode
 import org.specs2._
 import masterleague4s.data._
-import IdAnnotated._
+import Serialized._
 import FDecoders._
 
 class TournamentDecoderSpec extends Specification {
@@ -68,7 +68,7 @@ class TournamentDecoderSpec extends Specification {
 
   def parse35 = {
 
-    decode[TournamentId](id35string).isRight must beTrue
+    decode[IdTournament](id35string).isRight must beTrue
   }
 
 }
