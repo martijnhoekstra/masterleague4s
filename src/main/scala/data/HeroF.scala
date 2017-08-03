@@ -17,4 +17,13 @@ object HeroF {
     def foldRight[A, B](fa: HeroF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = f(fa.role, lb)
     def traverse[G[_]: Applicative, A, B](fa: HeroF[A])(f: A => G[B]): G[HeroF[B]] = f(fa.role).map(b => fa.map(_ => b))
   }
+
+  implicit def heroEq[A: Eq] = new Eq[HeroF[A]] {
+    def eqv(x: HeroF[A], y: HeroF[A]) = {
+      x.name == y.name &&
+        Eq.eqv(x.role, y.role) &&
+        x.url == y.url &&
+        x.portrait == y.portrait
+    }
+  }
 }
