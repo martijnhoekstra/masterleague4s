@@ -34,7 +34,7 @@ organization := "com.heroestools"
 
 publishArtifact in Test := false
 
-version := "0.0.4-Snapshot"
+version := "0.0.4-SNAPSHOT"
 
 scalaVersion := "2.12.3"
 
