@@ -114,7 +114,7 @@ val catsDependencies = List(
 )
 
 val matryoshkaDependencies = List(
-  "com.slamdata" %% "matryoshka-core" % "0.18.3"
+  "com.slamdata" %% "matryoshka-core" % "0.21.0"
 )
 
 val simulacrumDependencies = List("com.github.mpilquist" %% "simulacrum" % "0.10.0")
