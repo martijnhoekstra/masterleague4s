@@ -21,7 +21,9 @@ object Endpoints {
 
   def mljsonuri(resource: String) = Uri.parse(s"https://api.masterleague.net/$resource/?format=json").require
 
-  val heroes = tag[IdHero][Uri](host.copy(path = Path(true, true, List("heroes"))).withQuery(List(json, maxHeroes).combineAll))
+  val heroes3 = tag[IdHero][Uri](host.copy(path = Path(true, true, List("heroes"))).withQuery(List(json, maxHeroes).combineAll))
+
+  val heroes = tag[IdHero][Uri](Uri.parse(s"https://api.masterleague.net/heroes/?format=json&page_size=25").require)
 
   val heroes2 = tag[IdHero][Uri](mljsonuri("heroes"))
   val matches = tag[IdMatch][Uri](mljsonuri("matches"))
@@ -32,4 +34,7 @@ object Endpoints {
   val players = tag[IdPlayer][Uri](mljsonuri("players"))
   val tournaments = tag[IdTournament][Uri](mljsonuri("tournaments"))
   val calendar = tag[CalendarEntryId][Uri](mljsonuri("calendar"))
+
+  val auth = Uri.parse(s"https://api.masterleague.net/auth/token").require
+
 }

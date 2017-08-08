@@ -94,6 +94,16 @@ object FDecoders {
       (id, MatchF(date, patch, tournament, stage, round, series, game, battleground, url, drafts))
   }
 
+  import net.Throttled
+  implicit def throttledDecoder: Decoder[Throttled] = Decoder.forProduct1("detail") {
+    (detail: String) => Throttled(detail)
+  }
+
+  import net.authorization.Token
+  implicit def tokenDecoder: Decoder[Token] = Decoder.forProduct1("token") {
+    (token: String) => Token(token)
+  }
+
   implicit def decodeAPICall[A: Decoder] = Decoder.forProduct4("count", "next", "previous", "results")(APIResultF.apply[A, Uri @@ A] _)
   implicit def decodePlainArray[A: Decoder] = Decoder.decodeList[A]
 

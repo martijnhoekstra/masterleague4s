@@ -22,6 +22,8 @@ import masterleague4s.data._
 import Serialized._
 import scala.concurrent.duration._
 import fs2.util.Async
+import authorization.Token
+import authorization.Auth
 
 object Api {
 
@@ -91,26 +93,42 @@ object Api {
     }.map(_.toEither)
   }
 
-  def runToMap[F[_]: Async, A: Decoder, K, V](uri: Uri @@ A)(k: A => K, v: A => V): F[Map[K, V]] = {
+  import cats.Traverse
+  def runToMap[F[_]: Async: Traverse, A: Decoder, K, V](uri: Uri @@ A, tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
+    val travf = implicitly[Traverse[F]]
 
-    def gather = for {
-      stream <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1.seconds))
-    } yield stream.runFold(Map.empty[K, V])((m, page) => {
+    val getToken: ClientRunnable[F, F[Option[Token]]] = tokenprovider.map(crfst => {
+      crfst.map(st => st.runLogFree.map(v => v(0)).run)
+    }).sequence.map(_.sequence)
+
+    def gatherOption(option: Option[Token]) = for {
+      x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1200.milliseconds), option)
+    } yield x.runFold(Map.empty[K, V])((m, page) => {
       //TODO: key and value projections can and should be pushed deeper into the stack
       page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
     })
 
-    for {
-      client <- http.client[F]()
-      map <- gather.run(client)
-    } yield map
+    def gatherSome(ftoken: F[Option[Token]]): ClientRunnable[F, F[Map[K, V]]] = {
+      val r = travf.map(ftoken)(t => gatherOption(t))
+      r.sequence.map(ff => ff.flatMap(id => id))
+    }
+
+    def gather = for {
+      fot <- getToken
+      r <- gatherSome(fot)
+    } yield r
+
+    http.client[F]().flatMap(client => gather.run(client))
+
   }
 
-  def allTournaments[F[_]: Async] = runToMap(Endpoints.tournaments)(t => t._1, t => t._2)
-  def allMatches[F[_]: Async] = runToMap(Endpoints.matches)(t => t._1, t => t._2)
-  def allHeroes[F[_]: Async] = runToMap(Endpoints.heroes)(t => t._1, t => t._2)
-  def allPlayers[F[_]: Async] = runToMap(Endpoints.players)(t => t._1, t => t._2)
-  def allTeams[F[_]: Async] = runToMap(Endpoints.teams)(t => t._1, t => t._2)
+  def authorize[F[_]: Catchable](user: String, pass: String) = Auth.getToken[F](Endpoints.auth, user, pass)
+
+  def allTournaments[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F], tr: Traverse[F]) = runToMap(Endpoints.tournaments, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allMatches[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F], tr: Traverse[F]) = runToMap(Endpoints.matches, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allHeroes[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F], tr: Traverse[F]) = runToMap(Endpoints.heroes, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allPlayers[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F], tr: Traverse[F]) = runToMap(Endpoints.players, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allTeams[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F], tr: Traverse[F]) = runToMap(Endpoints.teams, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
 
   def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
   def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)

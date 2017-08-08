@@ -1,23 +1,47 @@
 package masterleague4s
 
 object Runner {
-  import api.Api._
+  //import api.Api._
   import fs2.Task
   import DefaultResources._
 
   def main(args: Array[String]): Unit = {
+
+    //import spinoco.protocol.http
+    import spinoco.protocol.http.Uri
+    //import spinoco.protocol.http.Uri.Query
+    //import spinoco.fs2.http.body.BodyEncoder
+
+    //import spinoco.fs2.http
+    //import spinoco.fs2.http.HttpClient
+    //import spinoco.fs2.http.HttpRequest
+    //import fs2.Stream
+    import masterleague4s.net.authorization.Auth
+
+    val runnable = Auth.getToken[Task](Uri.parse("https://api.masterleague.net/auth/token/").require, "api-7yWS", "RVB20x3yZBuZ4yR23crs")
+    val tr = for {
+      client <- spinoco.fs2.http.client[Task]()
+      resp <- runnable.run(client).runLogFree.run
+    } yield resp
+
+    tr.unsafeAttemptRun match {
+      case Left(err) => println(s"error: $err")
+      case Right(v) => println({ v.head })
+    }
+    /*
     println("TOURNAMENTS:")
     (allTournaments[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, tourny) => s"Tournament #$id is ${tourny.name}" }
     }) foreach println
 
+
     println("MATCHES:")
     (allMatches[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, _) => s"Match #$id" }
     }) foreach println
-
+*/
     /*
     println("PLAYERS:")
     (allPlayers[Task].unsafeAttemptRun match {
