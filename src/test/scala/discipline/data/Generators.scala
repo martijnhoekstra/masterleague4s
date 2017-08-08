@@ -50,5 +50,11 @@ object Generators {
     portrait <- arbitrary[HeroPortrait]
   } yield HeroF(name, role, url, portrait))
 
+  import masterleague4s.net.Throttled
+
+  implicit def arbThrottled: Arbitrary[Throttled] = Arbitrary(for {
+    cause <- arbitrary[String]
+  } yield Throttled(cause))
+
 }
 

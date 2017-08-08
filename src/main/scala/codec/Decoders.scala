@@ -23,7 +23,6 @@ object FDecoders {
 
   implicit val uriEncoder: Encoder[Uri] = new Encoder[Uri] {
     def apply(uri: Uri) = Json.fromString(uri.toString)
-
   }
 
   implicit def uriADecoder[A]: Decoder[Uri @@ A] = uri.map(u => tag[A][Uri](u))
@@ -104,11 +103,13 @@ object FDecoders {
   implicit def throttledDecoder: Decoder[Throttled] = Decoder.forProduct1("detail") {
     (detail: String) => Throttled(detail)
   }
+  implicit def throttledEncoder: Encoder[Throttled] = Encoder.forProduct1("detail")(t => t.detail)
 
   import net.authorization.Token
   implicit def tokenDecoder: Decoder[Token] = Decoder.forProduct1("token") {
     (token: String) => Token(token)
   }
+  implicit def toenEncoder: Encoder[Token] = Encoder.forProduct1("token")(t => t.token)
 
   implicit def decodeAPICall[A: Decoder]: Decoder[APIResultF[A, Uri @@ A]] = Decoder.forProduct4("count", "next", "previous", "results")(APIResultF.apply[A, Uri @@ A] _)
   implicit def encodeAPICall[A: Encoder]: Encoder[APIResultF[A, Uri @@ A]] = Encoder.forProduct4("count", "next", "previous", "results")(u => (u.count, u.next, u.previous, u.results))
