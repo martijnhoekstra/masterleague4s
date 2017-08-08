@@ -21,7 +21,13 @@ object FDecoders {
       } yield uri
   }
 
-  implicit def uria[A]: Decoder[Uri @@ A] = uri.map(u => tag[A][Uri](u))
+  implicit val uriEncoder: Encoder[Uri] = new Encoder[Uri] {
+    def apply(uri: Uri) = Json.fromString(uri.toString)
+
+  }
+
+  implicit def uriADecoder[A]: Decoder[Uri @@ A] = uri.map(u => tag[A][Uri](u))
+  implicit def uriAEncoder[A]: Encoder[Uri @@ A] = uriEncoder.contramap(id => id)
 
   implicit val localDate: Decoder[LocalDate] = new Decoder[LocalDate] {
     final def apply(c: HCursor): Decoder.Result[LocalDate] = {
@@ -104,7 +110,9 @@ object FDecoders {
     (token: String) => Token(token)
   }
 
-  implicit def decodeAPICall[A: Decoder] = Decoder.forProduct4("count", "next", "previous", "results")(APIResultF.apply[A, Uri @@ A] _)
+  implicit def decodeAPICall[A: Decoder]: Decoder[APIResultF[A, Uri @@ A]] = Decoder.forProduct4("count", "next", "previous", "results")(APIResultF.apply[A, Uri @@ A] _)
+  implicit def encodeAPICall[A: Encoder]: Encoder[APIResultF[A, Uri @@ A]] = Encoder.forProduct4("count", "next", "previous", "results")(u => (u.count, u.next, u.previous, u.results))
+
   implicit def decodePlainArray[A: Decoder] = Decoder.decodeList[A]
 
   implicit val decodeLiveStream: Decoder[LiveStream] = Decoder.forProduct4("country", "caster", "url", "viewers")(LiveStream.apply)
