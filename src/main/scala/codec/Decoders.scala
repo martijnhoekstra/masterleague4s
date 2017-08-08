@@ -109,7 +109,7 @@ object FDecoders {
   implicit def tokenDecoder: Decoder[Token] = Decoder.forProduct1("token") {
     (token: String) => Token(token)
   }
-  implicit def toenEncoder: Encoder[Token] = Encoder.forProduct1("token")(t => t.token)
+  implicit def tokenEncoder: Encoder[Token] = Encoder.forProduct1("token")(t => t.token)
 
   implicit def decodeAPICall[A: Decoder]: Decoder[APIResultF[A, Uri @@ A]] = Decoder.forProduct4("count", "next", "previous", "results")(APIResultF.apply[A, Uri @@ A] _)
   implicit def encodeAPICall[A: Encoder]: Encoder[APIResultF[A, Uri @@ A]] = Encoder.forProduct4("count", "next", "previous", "results")(u => (u.count, u.next, u.previous, u.results))

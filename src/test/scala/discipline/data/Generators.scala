@@ -56,5 +56,10 @@ object Generators {
     cause <- arbitrary[String]
   } yield Throttled(cause))
 
+  import masterleague4s.net.authorization.Token
+  implicit def arbToken: Arbitrary[Token] = Arbitrary(for {
+    value <- arbitrary[String]
+  } yield Token(value))
+
 }
 

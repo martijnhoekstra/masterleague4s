@@ -1,9 +1,10 @@
 package masterleague4s
 package codec
 
+import io.circe._
 import io.circe.syntax._
 import org.specs2._
-//import org.scalacheck._
+import org.scalacheck.Arbitrary
 import masterleague4s.instances.Generators._
 import spinoco.protocol.http.Uri
 
@@ -27,11 +28,17 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
 
   import masterleague4s.net.Throttled
 
-  def throttled = prop((t: Throttled) => {
-    val reparsed = t.asJson.as[Throttled]
+  def throttled = roundtrip[Throttled]
+
+  import masterleague4s.net.authorization.Token
+
+  def token = roundtrip[Token]
+
+  def roundtrip[A: Arbitrary: Decoder: Encoder] = prop((a: A) => {
+    val reparsed = a.asJson.as[A]
     reparsed match {
       case Left(err) => err must_== false
-      case Right(parsed) => parsed must_== t
+      case Right(parsed) => parsed must_== a
     }
   })
 
