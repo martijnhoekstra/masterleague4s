@@ -35,6 +35,6 @@ object Endpoints {
   val tournaments = tag[IdTournament][Uri](mljsonuri("tournaments"))
   val calendar = tag[CalendarEntryId][Uri](mljsonuri("calendar"))
 
-  val auth = Uri.parse(s"https://api.masterleague.net/auth/token").require
+  val auth = Uri.parse(s"https://api.masterleague.net/auth/token/").require
 
 }

@@ -38,13 +38,16 @@ object UnfoldApiResult {
     val one: HttpClient[F] => Stream[F, UriApiResult[A]] = (client: HttpClient[F]) => for {
       response <- (sleep >> client.request(r))
       status = response.header.status
-      body <- if (status.isSuccess) Stream.eval(response.bodyAs[UriApiResult[A]]).map(_.require)
-      else {
-        val textbody = Stream.eval(response.withContentType(ContentType(MediaType.`text/plain`, None, None)).bodyAsString)
-        textbody.map(body => {
-          val error = s"Unexpected network response: status ${status.code} - ${status.longDescription} CONTENTS: $body"
-          throw new Exception(error)
-        })
+      body <- {
+        //println(s"imma fetching a body for ${uri.query}")
+        if (status.isSuccess) Stream.eval(response.bodyAs[UriApiResult[A]]).map(_.require)
+        else {
+          val textbody = Stream.eval(response.withContentType(ContentType(MediaType.`text/plain`, None, None)).bodyAsString)
+          textbody.map(body => {
+            val error = s"Unexpected network response: status ${status.code} - ${status.longDescription} CONTENTS: $body"
+            throw new Exception(error)
+          })
+        }
       }
     } yield body
 
