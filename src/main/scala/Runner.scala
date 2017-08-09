@@ -18,7 +18,8 @@ object Runner {
     //import fs2.Stream
     import masterleague4s.net.authorization.Auth
 
-    val runnable = Auth.getToken[Task](Uri.parse("https://api.masterleague.net/auth/token/").require, "api-7yWS", "RVB20x3yZBuZ4yR23crs")
+    val runnable = Auth.getToken[Task](Uri.parse("https://api.masterleague.net/auth/token/").require, "user", "pass")
+
     val tr = for {
       client <- spinoco.fs2.http.client[Task]()
       resp <- runnable.run(client).runLogFree.run
