@@ -28,11 +28,7 @@ object ClientRunnable {
   class ClientRunnableMonad[F[_]] extends Monad[({ type l[a] = ClientRunnable[F, a] })#l] {
 
     def flatMap[A, B](fa: ClientRunnable[F, A])(f: A => ClientRunnable[F, B]): ClientRunnable[F, B] = {
-      val ffb: HttpClient[F] => B = for {
-        a <- fa.run _
-        b <- f(a).run _
-      } yield b
-      ClientRunnable.lift(ffb)
+      ClientRunnable.lift((client: HttpClient[F]) => f(fa.run(client)).run(client))
     }
 
     def tailRecM[A, B](a: A)(fn: A => ClientRunnable[F, Either[A, B]]): ClientRunnable[F, B] = {

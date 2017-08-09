@@ -22,6 +22,8 @@ import masterleague4s.data._
 import Serialized._
 import scala.concurrent.duration._
 import fs2.util.Async
+import authorization.Token
+import authorization.Auth
 
 object Api {
 
@@ -91,26 +93,68 @@ object Api {
     }.map(_.toEither)
   }
 
-  def runToMap[F[_]: Async, A: Decoder, K, V](uri: Uri @@ A)(k: A => K, v: A => V): F[Map[K, V]] = {
+  def runToMap[F[_]: Async, A: Decoder, K, V](uri: Uri @@ A, tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
 
-    def gather = for {
-      stream <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1.seconds))
-    } yield stream.runFold(Map.empty[K, V])((m, page) => {
+    //TODO: Address this wart?
+    def trySingle[AA](stream: Stream[F, AA]): F[AA] = runSingle(stream).map {
+      case Single(a) => a
+      case Empty => throw new Exception("head of empty stream")
+      case Multiple => throw new Exception("multiple elements where one was expected")
+    }
+
+    sealed trait SingleResult[+AA]
+    case object Empty extends SingleResult[Nothing]
+    case object Multiple extends SingleResult[Nothing]
+    case class Single[AA](a: AA) extends SingleResult[AA]
+    object SingleResult {
+      def one[AA](a: AA): SingleResult[AA] = Single(a)
+      def none[AA]: SingleResult[AA] = Empty
+      def multi[AA]: SingleResult[AA] = Multiple
+    }
+
+    def runSingle[AA](stream: Stream[F, AA]): F[SingleResult[AA]] = stream.runFold(SingleResult.none[AA]) {
+      case (Empty, a) => Single(a)
+      case _ => Multiple
+    }
+
+    def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] = for {
+      x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1200.milliseconds), option)
+    } yield x.runFold(Map.empty[K, V])((m, page) => {
       //TODO: key and value projections can and should be pushed deeper into the stack
       page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
     })
 
-    for {
-      client <- http.client[F]()
-      map <- gather.run(client)
-    } yield map
+    val runnable = tokenprovider match {
+      case None => gatherOption(None)
+      case Some(tokenrunnable) => {
+        tokenrunnable.flatMap((tokenstream: Stream[F, Token]) => {
+
+          val mappedtokens: Stream[F, ClientRunnable[F, F[Map[K, V]]]] = tokenstream.map(t => gatherOption(Some(t)))
+
+          val firstrunnable: F[ClientRunnable[F, F[Map[K, V]]]] = trySingle(mappedtokens)
+
+          val clientliftable: HttpClient[F] => F[Map[K, V]] = (client) => for {
+            runnable <- firstrunnable
+            map <- runnable.run(client)
+          } yield map
+
+          ClientRunnable.lift(clientliftable)
+
+        })
+
+      }
+    }
+    http.client[F]().flatMap(client => runnable.run(client))
+
   }
 
-  def allTournaments[F[_]: Async] = runToMap(Endpoints.tournaments)(t => t._1, t => t._2)
-  def allMatches[F[_]: Async] = runToMap(Endpoints.matches)(t => t._1, t => t._2)
-  def allHeroes[F[_]: Async] = runToMap(Endpoints.heroes)(t => t._1, t => t._2)
-  def allPlayers[F[_]: Async] = runToMap(Endpoints.players)(t => t._1, t => t._2)
-  def allTeams[F[_]: Async] = runToMap(Endpoints.teams)(t => t._1, t => t._2)
+  def authorize[F[_]: Catchable](user: String, pass: String) = Auth.getToken[F](Endpoints.auth, user, pass)
+
+  def allTournaments[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.tournaments, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allMatches[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.matches, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allHeroes[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.heroes, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allPlayers[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.players, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allTeams[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.teams, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
 
   def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
   def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)

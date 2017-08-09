@@ -22,23 +22,23 @@ object Generators {
     init <- arbitrary[Boolean]
     trailing <- arbitrary[Boolean]
     segments <- arbitrary[List[String]]
-    //Path(initialSlash: Boolean, trailingSlash: Boolean, segments: Seq[String])
   } yield Path(init, trailing, segments))
 
   implicit val arbQuery: Arbitrary[Query] = Arbitrary(for {
     params <- arbitrary[List[(String, String)]]
-  } yield Query(params))
+    //allows only alphabetically ordered params by key with no duplicate
+    //this is not spec-enforced nor generally valid
+    //but it is for the use-case
+  } yield Query((params.groupBy(_._1).toList.collect { case (_, (k, v) :: _) => (k, v) }).sortBy(_._1)))
 
   implicit val arbUri: Arbitrary[Uri] = Arbitrary(for {
     scheme <- arbitrary[HttpScheme.Value]
     host <- arbitrary[HostPort]
     path <- arbitrary[Path]
     query <- arbitrary[Query]
-    //Uri(scheme: HttpScheme.Value, host: HostPort, path: Path, query: Query)
   } yield Uri(scheme, host, path, query))
 
   implicit def arbPortrait: Arbitrary[HeroPortrait] = Arbitrary(for {
-    //case class HeroPortrait(small: Uri, medium: Uri)
     small <- arbitrary[Uri]
     medium <- arbitrary[Uri]
   } yield HeroPortrait(small, medium))
@@ -49,6 +49,17 @@ object Generators {
     url <- arbitrary[Uri]
     portrait <- arbitrary[HeroPortrait]
   } yield HeroF(name, role, url, portrait))
+
+  import masterleague4s.net.Throttled
+
+  implicit def arbThrottled: Arbitrary[Throttled] = Arbitrary(for {
+    cause <- arbitrary[String]
+  } yield Throttled(cause))
+
+  import masterleague4s.net.authorization.Token
+  implicit def arbToken: Arbitrary[Token] = Arbitrary(for {
+    value <- arbitrary[String]
+  } yield Token(value))
 
 }
 
