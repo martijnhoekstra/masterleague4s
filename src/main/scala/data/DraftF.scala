@@ -4,7 +4,7 @@ package data
 import cats.implicits._
 import cats._
 
-case class DraftF[A, B, C](team: A, isWinner: Boolean, bans: List[B], picks: List[C])
+case class DraftF[+A, +B, +C](team: A, isWinner: Boolean, bans: List[B], picks: List[C])
 
 object DraftF {
   def teamDraftFunctor[B, C]: Traverse[({ type l[a] = DraftF[a, B, C] })#l] = new Traverse[({ type l[a] = DraftF[a, B, C] })#l] {

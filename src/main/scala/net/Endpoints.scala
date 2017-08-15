@@ -9,7 +9,7 @@ import shapeless.tag
 import masterleague4s.data.Serialized._
 
 object Endpoints {
-  val host = Uri.parse(s"https://api.masterleague.net/").require
+  val host = Uri.parse(s"http://api.masterleague.net/").require
   def json = Query(List("format" -> "json"))
   def maxEntries[A](max: Int) = tag[A][Query](Query(List("page_size" -> max.toString)))
 
@@ -19,7 +19,7 @@ object Endpoints {
   val maxPlayers = maxEntries[IdPlayer](100)
   val maxTournaments = maxEntries[IdTournament](100)
 
-  def mljsonuri(resource: String) = Uri.parse(s"https://api.masterleague.net/$resource/?format=json").require
+  def mljsonuri(resource: String) = Uri.parse(s"http://api.masterleague.net/$resource/?format=json").require
 
   val heroes3 = tag[IdHero][Uri](host.copy(path = Path(true, true, List("heroes"))).withQuery(List(json, maxHeroes).combineAll))
 

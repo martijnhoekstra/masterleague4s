@@ -6,7 +6,7 @@ import java.time.Instant
 import cats.implicits._
 import cats._
 
-case class MatchF[A, B, C, D, E, F](date: Instant, patch: A, tournament: B, stage: C, round: String, series: D, game: Int, battleground: E, url: Uri, drafts: List[F])
+case class MatchF[+A, +B, +C, +D, +E, +F](date: Instant, patch: A, tournament: B, stage: C, round: String, series: D, game: Int, battleground: E, url: Uri, drafts: List[F])
 
 object MatchF {
 

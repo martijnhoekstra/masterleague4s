@@ -12,7 +12,7 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
 
   def is = s2"""
   uri roundtrips from uri $fromUri
-  throttled roundtrips $throttled
+  APIError roundtrips $errordetails
 
 """
 
@@ -26,9 +26,9 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
     }
   })
 
-  import masterleague4s.net.Throttled
+  import masterleague4s.net.APIError
 
-  def throttled = roundtrip[Throttled]
+  def errordetails = roundtrip[APIError]
 
   import masterleague4s.net.authorization.Token
 
