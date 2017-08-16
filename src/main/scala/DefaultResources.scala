@@ -3,7 +3,7 @@ package masterleague4s
 import java.nio.channels.AsynchronousChannelGroup
 import java.util.concurrent.Executors
 
-import fs2.{ Scheduler, Strategy }
+import fs2.{Scheduler, Strategy}
 
 object DefaultResources {
 
@@ -11,7 +11,8 @@ object DefaultResources {
 
   implicit val S = Strategy.fromExecutor(ES)
 
-  implicit val Sch = Scheduler.fromScheduledExecutorService(Executors.newScheduledThreadPool(4, Strategy.daemonThreadFactory("S")))
+  implicit val Sch =
+    Scheduler.fromScheduledExecutorService(Executors.newScheduledThreadPool(4, Strategy.daemonThreadFactory("S")))
 
   implicit val AG = AsynchronousChannelGroup.withThreadPool(ES)
 

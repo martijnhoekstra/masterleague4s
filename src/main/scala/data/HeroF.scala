@@ -13,17 +13,18 @@ object HeroF {
       val newRole = f(fa.role)
       fa.copy(role = newRole)
     }
-    def foldLeft[A, B](fa: HeroF[A], b: B)(f: (B, A) => B): B = f(b, fa.role)
+    def foldLeft[A, B](fa: HeroF[A], b: B)(f: (B, A) => B): B                           = f(b, fa.role)
     def foldRight[A, B](fa: HeroF[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = f(fa.role, lb)
-    def traverse[G[_]: Applicative, A, B](fa: HeroF[A])(f: A => G[B]): G[HeroF[B]] = f(fa.role).map(b => fa.map(_ => b))
+    def traverse[G[_]: Applicative, A, B](fa: HeroF[A])(f: A => G[B]): G[HeroF[B]] =
+      f(fa.role).map(b => fa.map(_ => b))
   }
 
   implicit def heroEq[A: Eq] = new Eq[HeroF[A]] {
     def eqv(x: HeroF[A], y: HeroF[A]) = {
       x.name == y.name &&
-        Eq.eqv(x.role, y.role) &&
-        x.url == y.url &&
-        x.portrait == y.portrait
+      Eq.eqv(x.role, y.role) &&
+      x.url == y.url &&
+      x.portrait == y.portrait
     }
   }
 }

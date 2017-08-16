@@ -21,15 +21,15 @@ class EndpointsSpec extends Specification {
   import Endpoints._
   import spinoco.protocol.http.HttpScheme._
 
-  def shost = host.scheme === HTTPS
-  def sauth = auth.scheme === HTTPS
-  def smatches = matches.scheme === HTTPS
+  def shost          = host.scheme === HTTPS
+  def sauth          = auth.scheme === HTTPS
+  def smatches       = matches.scheme === HTTPS
   def sbattlegrounds = battlegrounds.scheme === HTTPS
-  def sregions = regions.scheme === HTTPS
-  def steams = teams.scheme === HTTPS
-  def spatches = patches.scheme === HTTPS
-  def splayers = players.scheme === HTTPS
-  def stournaments = tournaments.scheme === HTTPS
-  def scalendar = calendar.scheme === HTTPS
+  def sregions       = regions.scheme === HTTPS
+  def steams         = teams.scheme === HTTPS
+  def spatches       = patches.scheme === HTTPS
+  def splayers       = players.scheme === HTTPS
+  def stournaments   = tournaments.scheme === HTTPS
+  def scalendar      = calendar.scheme === HTTPS
 
 }

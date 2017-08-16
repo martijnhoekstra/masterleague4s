@@ -3,7 +3,7 @@ package codec
 
 object CirceSupport {
   import io.circe._
-  import scodec.{ Attempt, Err }
+  import scodec.{Attempt, Err}
   import spinoco.protocol.http.header.value.HttpCharset
   import spinoco.fs2.http.body.BodyDecoder
   import io.circe.parser._
@@ -18,7 +18,8 @@ object CirceSupport {
             json <- parse(s)
             a <- json.as[A]
           } yield a
-          Attempt.fromEither(x.left.map(ex => Err(s"Failed to decode string $es ContentType: $ct, charset: $chs, err: ${ex.getMessage}")))
+          Attempt.fromEither(x.left.map(ex =>
+            Err(s"Failed to decode string $es ContentType: $ct, charset: $chs, err: ${ex.getMessage}")))
         }
       }
   }

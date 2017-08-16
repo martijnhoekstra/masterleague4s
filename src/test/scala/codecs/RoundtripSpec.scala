@@ -18,13 +18,14 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
 
   import FDecoders._
 
-  def fromUri = prop((u: Uri) => {
-    val reparsed = u.asJson.as[Uri]
-    reparsed match {
-      case Left(_) => 1 must_== 1
-      case Right(uri) => uri must_== u
-    }
-  })
+  def fromUri =
+    prop((u: Uri) => {
+      val reparsed = u.asJson.as[Uri]
+      reparsed match {
+        case Left(_)    => 1 must_== 1
+        case Right(uri) => uri must_== u
+      }
+    })
 
   import masterleague4s.net.APIError
 
@@ -34,12 +35,13 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
 
   def token = roundtrip[Token]
 
-  def roundtrip[A: Arbitrary: Decoder: Encoder] = prop((a: A) => {
-    val reparsed = a.asJson.as[A]
-    reparsed match {
-      case Left(err) => err must_== false
-      case Right(parsed) => parsed must_== a
-    }
-  })
+  def roundtrip[A: Arbitrary: Decoder: Encoder] =
+    prop((a: A) => {
+      val reparsed = a.asJson.as[A]
+      reparsed match {
+        case Left(err)     => err must_== false
+        case Right(parsed) => parsed must_== a
+      }
+    })
 
 }

@@ -18,17 +18,18 @@ object Bridge {
   def getRequests[A](res: UriApiResult[A]): Stream[Task, Uri @@ A] =
     Stream.emits(res.next.toList)
 
-  def getEntries[F[_], E](uri: Uri @@ E)(implicit ctch: Catchable[F], decoder: Decoder[E]): HttpClient[F] => Stream[F, Attempt[APIResultF[E, Uri @@ E]]] =
+  def getEntries[F[_], E](uri: Uri @@ E)(
+      implicit ctch: Catchable[F],
+      decoder: Decoder[E]): HttpClient[F] => Stream[F, Attempt[APIResultF[E, Uri @@ E]]] =
     client => {
       val r = HttpRequest.get[F](uri)
 
       client.request(r).flatMap { resp =>
         {
           implicit val bodyDecoder = circeDecoder[UriApiResult[E]](decodeAPICall)
-          val fBody = resp.bodyAs[UriApiResult[E]]
+          val fBody                = resp.bodyAs[UriApiResult[E]]
           Stream.eval(fBody)
         }
       }
     }
 }
-

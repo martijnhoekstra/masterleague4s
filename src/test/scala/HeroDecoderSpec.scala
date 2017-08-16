@@ -14,7 +14,8 @@ class HeroDecoderSpec extends Specification {
     parse Abathur               $parseAbathur
 """
 
-  def abathurString = """{
+  def abathurString =
+    """{
     "id": 37,
     "name": "Abathur",
     "role": 4,
@@ -59,4 +60,4 @@ case class MapEntry(id: Long, name: String, url: Uri) extends PlainEntry
 case class RegionEntry(id: Long, name: String) extends PlainEntry
 case class PatchEntry(id: Long, name: String, from_date: LocalDate, to_date: LocalDate) extends PlainEntry //"2017-05-15"
 
-*/ 
+ */
