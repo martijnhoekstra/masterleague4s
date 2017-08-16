@@ -99,11 +99,12 @@ object FDecoders {
       (id, MatchF(date, patch, tournament, stage, round, series, game, battleground, url, drafts))
   }
 
-  import net.Throttled
-  implicit def throttledDecoder: Decoder[Throttled] = Decoder.forProduct1("detail") {
-    (detail: String) => Throttled(detail)
+  import net.APIError
+  implicit def errorDecoder: Decoder[APIError] = Decoder.forProduct1("detail") {
+    (detail: String) => APIError(detail)
   }
-  implicit def throttledEncoder: Encoder[Throttled] = Encoder.forProduct1("detail")(t => t.detail)
+
+  implicit def errorEncoder: Encoder[APIError] = Encoder.forProduct1("detail")(t => t.detail)
   import net.authorization.Token
   implicit def tokenDecoder: Decoder[Token] = Decoder.forProduct1("token") {
     (token: String) => Token(token)

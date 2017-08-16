@@ -50,11 +50,11 @@ object Generators {
     portrait <- arbitrary[HeroPortrait]
   } yield HeroF(name, role, url, portrait))
 
-  import masterleague4s.net.Throttled
+  import masterleague4s.net.APIError
 
-  implicit def arbThrottled: Arbitrary[Throttled] = Arbitrary(for {
+  implicit def arbThrottled: Arbitrary[APIError] = Arbitrary(for {
     cause <- arbitrary[String]
-  } yield Throttled(cause))
+  } yield APIError(cause))
 
   import masterleague4s.net.authorization.Token
   implicit def arbToken: Arbitrary[Token] = Arbitrary(for {

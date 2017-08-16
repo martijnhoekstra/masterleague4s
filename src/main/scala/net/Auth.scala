@@ -15,9 +15,6 @@ import cats.implicits._
 import codec.FDecoders._
 import codec.CirceSupport._
 
-case class Token(token: String)
-case class UserPass(username: String, password: String)
-
 object Auth {
 
   def getToken[F[_]: fs2.util.Catchable: fs2.util.Functor](endpoint: Uri, username: String, password: String): ClientRunnable[F, Stream[F, Token]] = {
@@ -32,4 +29,6 @@ object Auth {
 
   }
 
+  def authheader(tok: Token): TokenAuthorization = TokenAuthorization(tok)
 }
+

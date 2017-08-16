@@ -8,14 +8,14 @@ import matryoshka.data.Fix
 import shapeless.tag.@@
 import spinoco.fs2.http._
 import spinoco.protocol.http.Uri
-import spinoco.protocol.http.header.Authorization
+//import spinoco.protocol.http.header.Authorization
 import data.Serialized._
 import codec.CirceSupport._
 import codec.FDecoders._
 import fs2.util.Catchable
 import cats.implicits._
 import authorization.Token
-import spinoco.protocol.http.header.value.HttpCredentials.OAuth2BearerToken
+//import spinoco.protocol.http.header.value.HttpCredentials.OAuth2BearerToken
 
 object UnfoldApiResult {
   type StreamRunnable[F[_], A] = ClientRunnable[F, Stream[F, A]]
@@ -32,14 +32,12 @@ object UnfoldApiResult {
     def urimap(uriresult: UriApiResult[A]): APIResultF[A, RunnableResult[F, A]] = uriresult.bimap(id => id, uri => unfoldApiResult(uri, sleep, token))
     def streammap(str: Stream[F, UriApiResult[A]]): Stream[F, APIResultF[A, RunnableResult[F, A]]] = str.map(urimap)
 
-    def authheader(tok: Token) = Authorization(OAuth2BearerToken(tok.token))
+    val r: HttpRequest[F] = token.foldLeft(HttpRequest.get[F](uri))((req, tok) => req.appendHeader(authorization.Auth.authheader(tok)))
 
-    val r = token.foldLeft(HttpRequest.get[F](uri))((req, tok) => req.appendHeader(authheader(tok)))
     val one: HttpClient[F] => Stream[F, UriApiResult[A]] = (client: HttpClient[F]) => for {
       response <- (sleep >> client.request(r))
       status = response.header.status
       body <- {
-        //println(s"imma fetching a body for ${uri.query}")
         if (status.isSuccess) Stream.eval(response.bodyAs[UriApiResult[A]]).map(_.require)
         else {
           val textbody = Stream.eval(response.withContentType(ContentType(MediaType.`text/plain`, None, None)).bodyAsString)

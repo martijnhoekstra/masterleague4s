@@ -6,7 +6,7 @@ object Runner {
   import DefaultResources._
 
   def main(args: Array[String]): Unit = {
-    //val credentials = Some("user", "pass")
+    //val credentials = Some(("user", "pass"))
     val credentials = None
 
     //import spinoco.protocol.http
@@ -52,7 +52,36 @@ object Runner {
       case Right(m) => m.toList.map { case (id, player) => s"Player #$id is ${player.nickname}" }
     }) foreach println
     */
+    /*
+    val matchlist = allMatches[Task](credentials).unsafeAttemptRun match {
+      case Left(err) => { println(err); List() }
+      case Right(m) => m.toList.map(_._2)
+    }
 
+    println("ETC in the current patch")
+
+    val patchstats = masterleague4s.stats.Stats.forHeroInPatch(21l, 24l, matchlist)
+    patchstats.pretty.foreach(println)
+
+    println("ETC in HGC Europe - Open Division")
+    val tournystatsstats = masterleague4s.stats.Stats.forHeroInTourny(21l, 35l, matchlist)
+    tournystatsstats.pretty.foreach(println)
+    */
+
+    println("HEROES (Specialists):")
+    import masterleague4s.net.filters._
+    import masterleague4s.data.Roles._
+    val h = heroesWhere[Task](HeroFilter.forRole(Specialist), credentials).unsafeAttemptRun match {
+      case Left(err) => {
+        err.printStackTrace
+        List(s"error: ${err}")
+      }
+      case Right(m) => m.toList.map { case (id, hero) => s"Hero #$id is ${hero.name}" }
+    }
+
+    h foreach println
+
+    /*
     println("TEAMS:")
     (allTeams[Task](credentials).unsafeAttemptRun match {
       case Left(err) => {
@@ -62,7 +91,7 @@ object Runner {
       case Right(m) => m.toList.map { case (id, team) => s"Team #$id is ${team.name}" }
     }) foreach println
 
-    /*
+  
   
     println("REGIONS:")
     (regions.unsafeAttemptRun match {
