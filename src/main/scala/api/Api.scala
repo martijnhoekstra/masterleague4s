@@ -175,6 +175,6 @@ object Api {
 
   val regions = runSingleArray[IdRegion](Endpoints.regions)
   val patches = runSingleArray[IdPatch](Endpoints.patches)
-  val maps = runSingleArray[IdBattleground](Endpoints.maps)
+  val battlegrounds = runSingleArray[IdBattleground](Endpoints.battlegrounds)
 
 }

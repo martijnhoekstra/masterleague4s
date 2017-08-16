@@ -86,6 +86,6 @@ object Api {
 
   def getRegions(): java.util.Map[Long, Region] = doUnspeakableJavaThingsM(PlainApi.regions, asJavaRegion)
   def getPatches(): java.util.Map[Long, Patch] = doUnspeakableJavaThingsM(PlainApi.patches, asJavaPatch)
-  def getMaps(): java.util.Map[Long, GameMap] = doUnspeakableJavaThingsM(PlainApi.maps, asJavaGameMap)
+  def getBattlegrounds(): java.util.Map[Long, GameMap] = doUnspeakableJavaThingsM(PlainApi.battlegrounds, asJavaGameMap)
 
 }
