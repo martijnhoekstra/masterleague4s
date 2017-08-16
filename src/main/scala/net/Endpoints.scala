@@ -6,9 +6,9 @@ import shapeless.tag
 import masterleague4s.data.Serialized._
 
 object Endpoints {
-  val host = Uri.parse("http://api.masterleague.net/").require
+  val host = Uri.parse("https://api.masterleague.net/").require
 
-  val auth = Uri.parse("http://api.masterleague.net/auth/token/").require
+  val auth = Uri.parse("https://api.masterleague.net/auth/token/").require
 
   val heroes = tag[IdHero][Uri](Uri.parse("https://api.masterleague.net/heroes/?format=json&page_size=25").require)
   val matches = tag[IdMatch][Uri](Uri.parse("https://api.masterleague.net/matches/?format=json&page_size=25").require)
