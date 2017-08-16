@@ -2,7 +2,6 @@ package masterleague4s
 package stats
 
 import org.specs2._
-//import org.scalacheck.Arbitrary
 import StatsGenerators._
 
 class HeroStatsSpec extends Specification with org.specs2.ScalaCheck {
