@@ -27,8 +27,9 @@ import authorization.Auth
 
 object Api {
 
-  def streamAPI[A](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Stream[Task, Either[Err, UriApiResult[A]]] = {
-    type ErrOr[AA] = Either[Err, AA]
+  def streamAPI[A](uri: Uri @@ A, delay: FiniteDuration)(
+      implicit decoder: Decoder[A]): Stream[Task, Either[Err, UriApiResult[A]]] = {
+    type ErrOr[AA]    = Either[Err, AA]
     type ErrOrApi[AA] = ErrOr[UriApiResult[AA]]
 
     val tx: Task[Stream[Task, ErrOrApi[A]]] = http.client[Task]().map { client =>
@@ -37,7 +38,7 @@ object Api {
 
         def uris2as(ereq: ErrOr[Uri @@ A]): Stream[Task, ErrOrApi[A]] = ereq match {
           case Right(uri) => getEntries(uri)(implicitly[Catchable[Task]], decoder)(client).map(_.toEither)
-          case Left(err) => Stream(Left(err))
+          case Left(err)  => Stream(Left(err))
         }
         Crawler.crawl(Attempt.successful(uri).toEither, uris2as, results2uri, time.sleep[Task](delay))
       }
@@ -46,31 +47,39 @@ object Api {
     Stream.force(tx)
   }
 
-  def streamAPIResults[A: Decoder](uri: Uri @@ A, delay: FiniteDuration): Stream[Task, Either[Err, A]] = streamAPI(uri, delay).flatMap {
-    case Right(ar) => Stream.emits(ar.results.map(Right(_)))
-    case Left(err) => Stream(Left(err))
-  }
+  def streamAPIResults[A: Decoder](uri: Uri @@ A, delay: FiniteDuration): Stream[Task, Either[Err, A]] =
+    streamAPI(uri, delay).flatMap {
+      case Right(ar) => Stream.emits(ar.results.map(Right(_)))
+      case Left(err) => Stream(Left(err))
+    }
 
-  def apiToMap[A: WithId](uri: Uri @@ A, delay: FiniteDuration)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
-    val results = streamAPIResults(uri, delay)
+  def apiToMap[A: WithId](uri: Uri @@ A, delay: FiniteDuration)(
+      implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
+    val results    = streamAPIResults(uri, delay)
     val idprovider = implicitly[WithId[A]]
-    results.runFold(Attempt.successful(Map.empty[Long, A])) {
-      case (res, next) => for {
-        have <- res
-        res <- Attempt.fromEither(next)
-      } yield have.updated(idprovider.id(res), res)
-    }.map(_.toEither)
+    results
+      .runFold(Attempt.successful(Map.empty[Long, A])) {
+        case (res, next) =>
+          for {
+            have <- res
+            res <- Attempt.fromEither(next)
+          } yield have.updated(idprovider.id(res), res)
+      }
+      .map(_.toEither)
   }
 
   def apiToList[A: Decoder](uri: Uri @@ A, delay: FiniteDuration): Task[Either[Err, List[A]]] = {
     val results = streamAPIResults(uri, delay)
 
-    results.runFold(Attempt.successful(List.empty[A])) {
-      case (res, next) => for {
-        have <- res
-        res <- Attempt.fromEither(next)
-      } yield res :: have
-    }.map(_.toEither)
+    results
+      .runFold(Attempt.successful(List.empty[A])) {
+        case (res, next) =>
+          for {
+            have <- res
+            res <- Attempt.fromEither(next)
+          } yield res :: have
+      }
+      .map(_.toEither)
   }
 
   def runSingleArray[A: WithId](uri: Uri @@ A)(implicit decoder: Decoder[A]): Task[Either[Err, Map[Long, A]]] = {
@@ -85,21 +94,26 @@ object Api {
       body <- Stream.eval(response.bodyAs[List[A]])
     } yield body
 
-    liststream.runFold(Attempt.successful(Map.empty[Long, A])) {
-      case (res, next) => for {
-        have <- res
-        batch <- next
-      } yield (have ++ batch.map(r => (idprovider.id(r), r)).toMap)
-    }.map(_.toEither)
+    liststream
+      .runFold(Attempt.successful(Map.empty[Long, A])) {
+        case (res, next) =>
+          for {
+            have <- res
+            batch <- next
+          } yield (have ++ batch.map(r => (idprovider.id(r), r)).toMap)
+      }
+      .map(_.toEither)
   }
 
-  def runToMap[F[_]: Async, A: Decoder, K, V](uri: Uri @@ A, tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
+  def runToMap[F[_]: Async, A: Decoder, K, V](
+      uri: Uri @@ A,
+      tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
 
     //TODO: Address this wart?
     def trySingle[AA](stream: Stream[F, AA]): F[AA] = runSingle(stream).map {
       case Single(a) => a
-      case Empty => throw new Exception("head of empty stream")
-      case Multiple => throw new Exception("multiple elements where one was expected")
+      case Empty     => throw new Exception("head of empty stream")
+      case Multiple  => throw new Exception("multiple elements where one was expected")
     }
 
     sealed trait SingleResult[+AA]
@@ -108,21 +122,23 @@ object Api {
     case class Single[AA](a: AA) extends SingleResult[AA]
     object SingleResult {
       def one[AA](a: AA): SingleResult[AA] = Single(a)
-      def none[AA]: SingleResult[AA] = Empty
-      def multi[AA]: SingleResult[AA] = Multiple
+      def none[AA]: SingleResult[AA]       = Empty
+      def multi[AA]: SingleResult[AA]      = Multiple
     }
 
     def runSingle[AA](stream: Stream[F, AA]): F[SingleResult[AA]] = stream.runFold(SingleResult.none[AA]) {
       case (Empty, a) => Single(a)
-      case _ => Multiple
+      case _          => Multiple
     }
 
-    def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] = for {
-      x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1200.milliseconds), option)
-    } yield x.runFold(Map.empty[K, V])((m, page) => {
-      //TODO: key and value projections can and should be pushed deeper into the stack
-      page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
-    })
+    def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] =
+      for {
+        x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1200.milliseconds), option)
+      } yield
+        x.runFold(Map.empty[K, V])((m, page) => {
+          //TODO: key and value projections can and should be pushed deeper into the stack
+          page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
+        })
 
     val runnable = tokenprovider match {
       case None => gatherOption(None)
@@ -130,13 +146,12 @@ object Api {
         tokenrunnable.flatMap((tokenstream: Stream[F, Token]) => {
 
           val mappedtokens: Stream[F, ClientRunnable[F, F[Map[K, V]]]] = tokenstream.map(t => gatherOption(Some(t)))
-
-          val firstrunnable: F[ClientRunnable[F, F[Map[K, V]]]] = trySingle(mappedtokens)
-
-          val clientliftable: HttpClient[F] => F[Map[K, V]] = (client) => for {
-            runnable <- firstrunnable
-            map <- runnable.run(client)
-          } yield map
+          val firstrunnable: F[ClientRunnable[F, F[Map[K, V]]]]        = trySingle(mappedtokens)
+          val clientliftable: HttpClient[F] => F[Map[K, V]] = (client) =>
+            for {
+              runnable <- firstrunnable
+              map <- runnable.run(client)
+            } yield map
 
           ClientRunnable.lift(clientliftable)
 
@@ -146,7 +161,11 @@ object Api {
     }
 
     //oh dear
-    http.client[F](requestCodec = spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(authorization.TokenAuthorization.headerCodec)).flatMap(client => runnable.run(client))
+    http
+      .client[F](
+        requestCodec =
+          spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(authorization.TokenAuthorization.headerCodec))
+      .flatMap(client => runnable.run(client))
 
   }
 
@@ -155,26 +174,46 @@ object Api {
 
   def authorize[F[_]: Catchable](user: String, pass: String) = Auth.getToken[F](Endpoints.auth, user, pass)
 
-  def allTournaments[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.tournaments, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allTournaments[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.tournaments, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
 
-  def allMatches[F[_]: Async](credentials: Option[(String, String)] = None) = matchesWhere(MatchFilter.empty, credentials)
-  def matchesWhere[F[_]](filter: MatchFilter, credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.matches.filter(filter), credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def allMatches[F[_]: Async](credentials: Option[(String, String)] = None) =
+    matchesWhere(MatchFilter.empty, credentials)
+
+  def matchesWhere[F[_]](filter: MatchFilter, credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.matches.filter(filter), credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
 
   def allHeroes[F[_]: Async](credentials: Option[(String, String)] = None) = heroesWhere(HeroFilter.empty, credentials)
-  def heroesWhere[F[_]](filter: HeroFilter, credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.heroes.filter(filter), credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
 
-  def allPlayers[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.players, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
-  def allTeams[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) = runToMap(Endpoints.teams, credentials.map { case (user, pass) => authorize(user, pass)(ev) })(t => t._1, t => t._2)
+  def heroesWhere[F[_]](filter: HeroFilter, credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.heroes.filter(filter), credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
 
-  def matches(wait: FiniteDuration) = apiToMap[IdMatch](Endpoints.matches, wait)
-  def heroes(wait: FiniteDuration) = apiToMap[IdHero](Endpoints.heroes, wait)
-  def players(wait: FiniteDuration) = apiToMap[IdPlayer](Endpoints.players, wait)
+  def allPlayers[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.players, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
+
+  def allTeams[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.teams, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
+
+  def matches(wait: FiniteDuration)     = apiToMap[IdMatch](Endpoints.matches, wait)
+  def heroes(wait: FiniteDuration)      = apiToMap[IdHero](Endpoints.heroes, wait)
+  def players(wait: FiniteDuration)     = apiToMap[IdPlayer](Endpoints.players, wait)
   def tournaments(wait: FiniteDuration) = apiToMap[IdTournament](Endpoints.tournaments, wait)
-  def calendar(wait: FiniteDuration): Task[Either[Err, List[CalendarEntryId]]] = apiToList[CalendarEntryId](Endpoints.calendar, wait)
-  def teams(wait: FiniteDuration) = apiToMap[IdTeam](Endpoints.teams, wait)
+  def teams(wait: FiniteDuration)       = apiToMap[IdTeam](Endpoints.teams, wait)
 
-  val regions = runSingleArray[IdRegion](Endpoints.regions)
-  val patches = runSingleArray[IdPatch](Endpoints.patches)
+  def calendar(wait: FiniteDuration) = apiToList[CalendarEntryId](Endpoints.calendar, wait)
+
+  val regions       = runSingleArray[IdRegion](Endpoints.regions)
+  val patches       = runSingleArray[IdPatch](Endpoints.patches)
   val battlegrounds = runSingleArray[IdBattleground](Endpoints.battlegrounds)
 
 }

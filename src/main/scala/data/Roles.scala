@@ -31,6 +31,5 @@ object Roles {
     Support -> 2,
     Assassin -> 3,
     Specialist -> 4
-
   )
 }

@@ -10,23 +10,29 @@ case class MatchFilter(map: Option[Long], tournament: Option[Long], patch: Optio
 object MatchFilter {
   def empty = MatchFilter(None, None, None, None)
   implicit def querybuilder = new QueryBuilder[MatchFilter] {
-    def query(filter: MatchFilter) = Query(List("map" -> filter.map, "tournament" -> filter.tournament, "patch" -> filter.patch, "player" -> filter.player)
-      .collect { case (name, Some(id)) => (name, id.toString) })
+    def query(filter: MatchFilter) =
+      Query(
+        List("map" -> filter.map,
+             "tournament" -> filter.tournament,
+             "patch" -> filter.patch,
+             "player" -> filter.player)
+          .collect { case (name, Some(id)) => (name, id.toString) })
   }
 }
 
 case class HeroFilter(role: Option[Role])
 
 object HeroFilter {
-  def empty = HeroFilter(None)
+  def empty               = HeroFilter(None)
   def forRole(role: Role) = HeroFilter(Some(role))
   implicit def querybuilder = new QueryBuilder[HeroFilter] {
-    def query(filter: HeroFilter) = Query(filter.role.toList.map {
-      case Warrior => "role" -> "1"
-      case Support => "role" -> "2"
-      case Assassin => "role" -> "3"
-      case Specialist => "role" -> "4"
-    })
+    def query(filter: HeroFilter) =
+      Query(filter.role.toList.map {
+        case Warrior    => "role" -> "1"
+        case Support    => "role" -> "2"
+        case Assassin   => "role" -> "3"
+        case Specialist => "role" -> "4"
+      })
   }
 }
 
@@ -53,19 +59,22 @@ object Filtering {
   def hbuilder = HeroFilter.querybuilder
   def tbuilder = TeamFilter.querybuilder
 
-  def filterMatches(base: Uri @@ IdMatch, filter: MatchFilter) = tag[IdMatch][Uri](base.withQuery(base.query |+| mbuilder.query(filter)))
+  def filterMatches(base: Uri @@ IdMatch, filter: MatchFilter) =
+    tag[IdMatch][Uri](base.withQuery(base.query |+| mbuilder.query(filter)))
 
   implicit class MatchFilterOps(receiver: Uri @@ IdMatch) {
     def filter(f: MatchFilter) = filterMatches(receiver, f)
   }
 
-  def filterHeroes(base: Uri @@ IdHero, filter: HeroFilter) = tag[IdHero][Uri](base.withQuery(base.query |+| hbuilder.query(filter)))
+  def filterHeroes(base: Uri @@ IdHero, filter: HeroFilter) =
+    tag[IdHero][Uri](base.withQuery(base.query |+| hbuilder.query(filter)))
 
   implicit class HeroFilterOps(receiver: Uri @@ IdHero) {
     def filter(f: HeroFilter) = filterHeroes(receiver, f)
   }
 
-  def filterTeams(base: Uri @@ IdTeam, filter: TeamFilter) = tag[IdTeam][Uri](base.withQuery(base.query |+| tbuilder.query(filter)))
+  def filterTeams(base: Uri @@ IdTeam, filter: TeamFilter) =
+    tag[IdTeam][Uri](base.withQuery(base.query |+| tbuilder.query(filter)))
 
   implicit class TeamFilterOps(receiver: Uri @@ IdTeam) {
     def filter(f: TeamFilter) = filterTeams(receiver, f)

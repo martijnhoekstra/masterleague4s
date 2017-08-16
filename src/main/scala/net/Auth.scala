@@ -17,13 +17,17 @@ import codec.CirceSupport._
 
 object Auth {
 
-  def getToken[F[_]: fs2.util.Catchable: fs2.util.Functor](endpoint: Uri, username: String, password: String): ClientRunnable[F, Stream[F, Token]] = {
+  def getToken[F[_]: fs2.util.Catchable: fs2.util.Functor](endpoint: Uri,
+                                                           username: String,
+                                                           password: String): ClientRunnable[F, Stream[F, Token]] = {
     implicit val encoder = BodyEncoder.`x-www-form-urlencoded`
 
-    val run: HttpClient[F] => Stream[F, Token] = (client: HttpClient[F]) => for {
-      response <- client.request(HttpRequest.post(endpoint, Query.empty :+ ("username" -> username) :+ ("password") -> password))
-      token <- Stream.eval(response.bodyAs[Token].map(_.require))
-    } yield token
+    val run: HttpClient[F] => Stream[F, Token] = (client: HttpClient[F]) =>
+      for {
+        response <- client.request(
+                     HttpRequest.post(endpoint, Query.empty :+ ("username" -> username) :+ ("password") -> password))
+        token <- Stream.eval(response.bodyAs[Token].map(_.require))
+      } yield token
 
     ClientRunnable.lift(run)
 
@@ -31,4 +35,3 @@ object Auth {
 
   def authheader(tok: Token): TokenAuthorization = TokenAuthorization(tok)
 }
-

@@ -1,4 +1,3 @@
-
 package masterleague4s
 package javaapi
 
@@ -11,14 +10,15 @@ import data._
 import Serialized._
 
 object Api {
-  import api.{ Api => PlainApi }
+  import api.{Api => PlainApi}
 
   private[this] val wait = 1.seconds
 
-  private[this] def doUnspeakableJavaThingsM[A, B](t: Task[Either[scodec.Err, Map[Long, A]]], projection: A => B) = t.unsafeRun.fold(
-    err => throw new Exception(err.message),
-    map => mapAsJavaMap(map.map { case (key, value) => (key, projection(value)) })
-  )
+  private[this] def doUnspeakableJavaThingsM[A, B](t: Task[Either[scodec.Err, Map[Long, A]]], projection: A => B) =
+    t.unsafeRun.fold(
+      err => throw new Exception(err.message),
+      map => mapAsJavaMap(map.map { case (key, value) => (key, projection(value)) })
+    )
 
   def asJavaPick(pick: PickF[Long, Long]) = pick match {
     case PickF(hero: Long, player: Long) => javaapi.Pick(hero, player)
@@ -29,11 +29,13 @@ object Api {
   }
 
   def asJavaDraft(draft: DraftId) = draft match {
-    case DraftF(team: Long, is_winner: Boolean, bans, picks) => javaapi.Draft(team, is_winner, seqAsJavaList(bans), seqAsJavaList(picks.map(asJavaPick)))
+    case DraftF(team: Long, is_winner: Boolean, bans, picks) =>
+      javaapi.Draft(team, is_winner, seqAsJavaList(bans), seqAsJavaList(picks.map(asJavaPick)))
   }
 
   def asJavaMatch(mat: IdMatch) = mat match {
-    case (id, MatchF(date, patch, tournament, stage, round, series, game, map, _, drafts)) => Match(id, date, patch, tournament, stage, round, series, game, map, seqAsJavaList(drafts.map(asJavaDraft)))
+    case (id, MatchF(date, patch, tournament, stage, round, series, game, map, _, drafts)) =>
+      Match(id, date, patch, tournament, stage, round, series, game, map, seqAsJavaList(drafts.map(asJavaDraft)))
   }
 
   def asJavaHero(hero: IdHero) = hero match {
@@ -41,11 +43,13 @@ object Api {
   }
 
   def asJavaPlayer(player: IdPlayer) = player match {
-    case (id, PlayerF(team, region, nickname, realname, country, role, _, _)) => Player(id, team, region, nickname, realname, country, Roles.reverseRoles(role))
+    case (id, PlayerF(team, region, nickname, realname, country, role, _, _)) =>
+      Player(id, team, region, nickname, realname, country, Roles.reverseRoles(role))
   }
 
   def asJavaTournament(tourny: IdTournament) = tourny match {
-    case (id, TournamentF(name, start_date, end_date, region, _, stages)) => Tournament(id, name, start_date, end_date, region, seqAsJavaList(stages.map(asJavaStage)))
+    case (id, TournamentF(name, start_date, end_date, region, _, stages)) =>
+      Tournament(id, name, start_date, end_date, region, seqAsJavaList(stages.map(asJavaStage)))
   }
 
   def asJavaTeam(team: IdTeam) = team match {
@@ -69,23 +73,34 @@ object Api {
   }
 
   def asJavaCalMatch(m: CalendarIdMatch) = m match {
-    case CalendarMatchF(datetime, name, format, left_team, right_team) => javaapi.CalendarMatch(datetime, name, format, left_team, right_team)
+    case CalendarMatchF(datetime, name, format, left_team, right_team) =>
+      javaapi.CalendarMatch(datetime, name, format, left_team, right_team)
   }
 
   def asJavaCal(calitem: CalendarEntryId) = calitem match {
     case CalendarEntryF(date, stage, is_live, streams, matches) =>
-      CalendarItem(date, stage, is_live, seqAsJavaList(streams.map(asJavaStream)), seqAsJavaList(matches.map(asJavaCalMatch)))
+      CalendarItem(date,
+                   stage,
+                   is_live,
+                   seqAsJavaList(streams.map(asJavaStream)),
+                   seqAsJavaList(matches.map(asJavaCalMatch)))
   }
 
-  def getMatches(): java.util.Map[Long, Match] = doUnspeakableJavaThingsM(PlainApi.matches(wait), asJavaMatch)
-  def getHeroes(): java.util.Map[Long, Hero] = doUnspeakableJavaThingsM(PlainApi.heroes(wait), asJavaHero)
+  def getMatches(): java.util.Map[Long, Match]  = doUnspeakableJavaThingsM(PlainApi.matches(wait), asJavaMatch)
+  def getHeroes(): java.util.Map[Long, Hero]    = doUnspeakableJavaThingsM(PlainApi.heroes(wait), asJavaHero)
   def getPlayers(): java.util.Map[Long, Player] = doUnspeakableJavaThingsM(PlainApi.players(wait), asJavaPlayer)
-  def getTournaments(): java.util.Map[Long, Tournament] = doUnspeakableJavaThingsM(PlainApi.tournaments(wait), asJavaTournament)
-  def getCalendar(): java.util.List[CalendarItem] = PlainApi.calendar(wait).unsafeRun.fold(err => throw new Exception(err.message), list => seqAsJavaList(list.map(asJavaCal)))
+  def getTournaments(): java.util.Map[Long, Tournament] =
+    doUnspeakableJavaThingsM(PlainApi.tournaments(wait), asJavaTournament)
+  def getCalendar(): java.util.List[CalendarItem] =
+    PlainApi
+      .calendar(wait)
+      .unsafeRun
+      .fold(err => throw new Exception(err.message), list => seqAsJavaList(list.map(asJavaCal)))
   def getTeams(): java.util.Map[Long, Team] = doUnspeakableJavaThingsM(PlainApi.teams(wait), asJavaTeam)
 
   def getRegions(): java.util.Map[Long, Region] = doUnspeakableJavaThingsM(PlainApi.regions, asJavaRegion)
-  def getPatches(): java.util.Map[Long, Patch] = doUnspeakableJavaThingsM(PlainApi.patches, asJavaPatch)
-  def getBattlegrounds(): java.util.Map[Long, GameMap] = doUnspeakableJavaThingsM(PlainApi.battlegrounds, asJavaGameMap)
+  def getPatches(): java.util.Map[Long, Patch]  = doUnspeakableJavaThingsM(PlainApi.patches, asJavaPatch)
+  def getBattlegrounds(): java.util.Map[Long, GameMap] =
+    doUnspeakableJavaThingsM(PlainApi.battlegrounds, asJavaGameMap)
 
 }

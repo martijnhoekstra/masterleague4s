@@ -23,12 +23,16 @@ object TokenAuthorization {
 
   val codec: Codec[TokenAuthorization] =
     (asciiConstant("Token") ~> (whitespace() ~> utf8String)).xmap(
-      { token => TokenAuthorization(Token(token)) }, _.credentials.token
+      { token =>
+        TokenAuthorization(Token(token))
+      },
+      _.credentials.token
     )
 
   //codec that first tries `Token sometoken` and then falls back to the known alternatives
   val customAuthorizationHeader: Codec[HttpHeader] = choice(
-    codec.upcast[HttpHeader], Authorization.codec.headerCodec
+    codec.upcast[HttpHeader],
+    Authorization.codec.headerCodec
   )
 
   //codec for the full header, including header name

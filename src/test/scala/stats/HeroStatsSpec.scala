@@ -14,7 +14,7 @@ class HeroStatsSpec extends Specification with org.specs2.ScalaCheck {
   def contestedRate = if (total == 0) None else Some(contested.toDouble / total)
   def firstPickRate = if (total == 0) None else Some(firstpicks.toDouble / total)
   def firstBanRate = if (total == 0) None else Some(firstbans.toDouble / total)
-  */
+   */
 
   def is = s2"""
   contested     >= picks           $contestedpicks
@@ -25,28 +25,34 @@ class HeroStatsSpec extends Specification with org.specs2.ScalaCheck {
   firstbanrate  <= contested       $firstbanban
 """
 
-  def contestedpicks = prop((hstats: HeroStats) => {
-    hstats.contested must be >= hstats.picks
-  })
+  def contestedpicks =
+    prop((hstats: HeroStats) => {
+      hstats.contested must be >= hstats.picks
+    })
 
-  def contestedbans = prop((hstats: HeroStats) => {
-    hstats.contested must be >= hstats.bans
-  })
+  def contestedbans =
+    prop((hstats: HeroStats) => {
+      hstats.contested must be >= hstats.bans
+    })
 
-  def totalcontested = prop((hstats: HeroStats) => {
-    hstats.total must be >= hstats.contested
-  })
+  def totalcontested =
+    prop((hstats: HeroStats) => {
+      hstats.total must be >= hstats.contested
+    })
 
-  def totaluncontested = prop((hstats: HeroStats) => {
-    hstats.total must be >= hstats.uncontested
-  })
+  def totaluncontested =
+    prop((hstats: HeroStats) => {
+      hstats.total must be >= hstats.uncontested
+    })
 
-  def firstpickpick = prop((hstats: HeroStats) => {
-    hstats.firstPickRate must be <= hstats.contestedRate
-  })
+  def firstpickpick =
+    prop((hstats: HeroStats) => {
+      hstats.firstPickRate must be <= hstats.contestedRate
+    })
 
-  def firstbanban = prop((hstats: HeroStats) => {
-    hstats.firstBanRate must be <= hstats.contestedRate
-  })
+  def firstbanban =
+    prop((hstats: HeroStats) => {
+      hstats.firstBanRate must be <= hstats.contestedRate
+    })
 
 }

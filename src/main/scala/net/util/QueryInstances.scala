@@ -12,13 +12,18 @@ object QueryInstances {
       //only lawful for alphabetically ordered params by key with no duplicates
       //this is not spec-enforced nor generally valid
       //but it is for the use-case
-      val params = ((y.params ::: x.params).groupBy(_._1).toList.collect { case (_, (k, v) :: _) => (k, v) }).sortBy(_._1)
+      val params =
+        ((y.params ::: x.params).groupBy(_._1).toList.collect { case (_, (k, v) :: _) => (k, v) }).sortBy(_._1)
       Query(params)
     }
-    def show(q: Query) = q.params.map(pair => pair match {
-      case (k, "") => k
-      case (k, v) => s"$k=$v"
-    }).mkString("?", "&", "")
+    def show(q: Query) =
+      q.params
+        .map(pair =>
+          pair match {
+            case (k, "") => k
+            case (k, v)  => s"$k=$v"
+        })
+        .mkString("?", "&", "")
 
     def eqv(x: Query, y: Query) = x == y
 
