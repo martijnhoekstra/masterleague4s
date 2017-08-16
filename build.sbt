@@ -88,6 +88,8 @@ scalacOptions ++=  List(
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
+scalafmtOnCompile in ThisBuild := true // all projects
+
 val circeVersion = "0.8.0"
 
 val circeDependencies = List(

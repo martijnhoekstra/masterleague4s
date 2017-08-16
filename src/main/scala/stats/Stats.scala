@@ -2,8 +2,6 @@ package masterleague4s
 package stats
 
 import masterleague4s.data._
-//import masterleague4s.data.Serialized._
-//import shapeless.tag.@@
 
 case class HeroStats(picks: Int, wins: Int, bans: Int, firstpicks: Int, firstbans: Int, uncontested: Int) {
   def contested = picks + bans
