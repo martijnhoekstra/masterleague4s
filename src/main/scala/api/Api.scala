@@ -145,16 +145,8 @@ object Api {
       }
     }
 
-    val definition = authorization.TokenAuthorization.codec //HeaerCodecDefinition[HttpHeader]
-    val mycodecinit = definition.headerCodec //Codec[HttpHeader]
-    val next = spinoco.protocol.http.codec.HttpHeaderCodec.codec(4096, otherHeaders = ("Authorization", mycodecinit)) //also Codec[HttpHeader]
-    val third = spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(next) //Codec[HttpRequestHeader]
-
-    val myheadercodec = third
-
-    http.client[F](requestCodec = myheadercodec).flatMap(client => runnable.run(client))
-
-    //And we fail with: Encoding of the header failed: Headers: not a value of type GenericHeader
+    //oh dear
+    http.client[F](requestCodec = spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(authorization.TokenAuthorization.headerCodec)).flatMap(client => runnable.run(client))
 
   }
 

@@ -24,7 +24,6 @@ object UnfoldApiResult {
   type RunnableResult[F[_], A] = Fix[({ type l[a] = RunnableApiStream[F, a, A] })#l]
 
   def unfoldApiResult[F[_]: Catchable, A: Decoder](uri: Uri @@ A, sleep: Stream[F, Unit], token: Option[Token]): RunnableResult[F, A] = {
-    println(s"I got token $token")
     implicit val bodyDecoder = circeDecoder[UriApiResult[A]](decodeAPICall)
 
     import spinoco.protocol.http.header.value.ContentType
@@ -35,12 +34,10 @@ object UnfoldApiResult {
 
     val r: HttpRequest[F] = token.foldLeft(HttpRequest.get[F](uri))((req, tok) => req.appendHeader(authorization.Auth.authheader(tok)))
 
-    println(s"request: $r")
     val one: HttpClient[F] => Stream[F, UriApiResult[A]] = (client: HttpClient[F]) => for {
       response <- (sleep >> client.request(r))
       status = response.header.status
       body <- {
-        //println(s"imma fetching a body for ${uri.query}")
         if (status.isSuccess) Stream.eval(response.bodyAs[UriApiResult[A]]).map(_.require)
         else {
           val textbody = Stream.eval(response.withContentType(ContentType(MediaType.`text/plain`, None, None)).bodyAsString)

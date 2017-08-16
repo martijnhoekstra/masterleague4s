@@ -8,7 +8,6 @@ object Runner {
   def main(args: Array[String]): Unit = {
     //val credentials = Some(("user", "pass"))
     val credentials = None
-    
 
     //import spinoco.protocol.http
     //import spinoco.protocol.http.Uri
@@ -69,7 +68,7 @@ object Runner {
     tournystatsstats.pretty.foreach(println)
     */
 
-    println("HEROES (Warrior):")
+    println("HEROES (Specialists):")
     import masterleague4s.net.filters._
     import masterleague4s.data.Roles._
     val h = heroesWhere[Task](HeroFilter.forRole(Specialist), credentials).unsafeAttemptRun match {

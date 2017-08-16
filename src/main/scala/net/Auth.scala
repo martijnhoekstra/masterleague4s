@@ -15,27 +15,6 @@ import cats.implicits._
 import codec.FDecoders._
 import codec.CirceSupport._
 
-import scodec.Codec
-//import scodec.codecs._
-import spinoco.protocol.http.codec.helper._
-import spinoco.protocol.http.header.DefaultHeader
-import spinoco.protocol.http.header.value.HeaderCodecDefinition
-
-//import spinoco.protocol.http.header.GenericHeader
-
-case class Token(token: String)
-case class UserPass(username: String, password: String)
-
-case class TokenAuthorization(credentials: Token) extends DefaultHeader {
-}
-object TokenAuthorization {
-  val tokenCodec: Codec[Token] =
-    (asciiConstant("Token") ~> (whitespace() ~> utf8String)).xmap(
-      { token => Token(token) }, _.token
-    )
-  val codec = HeaderCodecDefinition[TokenAuthorization](tokenCodec.xmap(TokenAuthorization.apply, _.credentials))
-}
-
 object Auth {
 
   def getToken[F[_]: fs2.util.Catchable: fs2.util.Functor](endpoint: Uri, username: String, password: String): ClientRunnable[F, Stream[F, Token]] = {
@@ -50,14 +29,6 @@ object Auth {
 
   }
 
-  def authheader(tok: Token): TokenAuthorization = TokenAuthorization(tok) /*{
-    //my own header, with hookers and blackjack
-    //import scodec.bits.ByteVector
-
-    TokenAuthorization(tok)
-    //Authorization(OAuth2BearerToken(tok.token))
-  }
-  */
-
+  def authheader(tok: Token): TokenAuthorization = TokenAuthorization(tok)
 }
 
