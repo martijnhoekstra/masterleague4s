@@ -26,9 +26,9 @@ class RoundtripSpec extends Specification with org.specs2.ScalaCheck {
     }
   })
 
-  import masterleague4s.net.Throttled
+  import masterleague4s.net.APIError
 
-  def throttled = roundtrip[Throttled]
+  def throttled = roundtrip[APIError]
 
   import masterleague4s.net.authorization.Token
 
