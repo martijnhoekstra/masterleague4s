@@ -2,7 +2,8 @@ package masterleague4s
 package api
 
 import io.circe.Decoder
-import fs2._
+import fs2.Stream
+import fs2.time
 import spinoco.fs2.http
 import http._
 import fs2.interop.cats._
@@ -13,9 +14,28 @@ import masterleague4s.net._
 import shapeless.tag.@@
 import scala.concurrent.duration._
 import fs2.util.Async
+import fs2.util.Catchable
 import authorization.Token
 
 object Primitives {
+
+  val waittime = 1100.milliseconds
+
+  sealed trait SingleResult[+AA]
+  case object Empty extends SingleResult[Nothing]
+  case object Multiple extends SingleResult[Nothing]
+  case class Single[AA](a: AA) extends SingleResult[AA]
+  object SingleResult {
+    def one[AA](a: AA): SingleResult[AA] = Single(a)
+    def none[AA]: SingleResult[AA]       = Empty
+    def multi[AA]: SingleResult[AA]      = Multiple
+  }
+
+  def runSingle[F[_]: Catchable, AA](stream: Stream[F, AA]): F[SingleResult[AA]] =
+    stream.take(2).runFold(SingleResult.none[AA]) {
+      case (Empty, a) => Single(a)
+      case _          => Multiple
+    }
 
   def runToMap[F[_]: Async, A: Decoder, K, V](
       uri: Uri @@ A,
@@ -28,24 +48,9 @@ object Primitives {
       case Multiple  => throw new Exception("multiple elements where one was expected")
     }
 
-    sealed trait SingleResult[+AA]
-    case object Empty extends SingleResult[Nothing]
-    case object Multiple extends SingleResult[Nothing]
-    case class Single[AA](a: AA) extends SingleResult[AA]
-    object SingleResult {
-      def one[AA](a: AA): SingleResult[AA] = Single(a)
-      def none[AA]: SingleResult[AA]       = Empty
-      def multi[AA]: SingleResult[AA]      = Multiple
-    }
-
-    def runSingle[AA](stream: Stream[F, AA]): F[SingleResult[AA]] = stream.runFold(SingleResult.none[AA]) {
-      case (Empty, a) => Single(a)
-      case _          => Multiple
-    }
-
     def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] =
       for {
-        x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](1200.milliseconds), option)
+        x <- UnfoldApiResult.linearizeApiResult(uri, time.sleep[F](waittime), option)
       } yield
         x.runFold(Map.empty[K, V])((m, page) => {
           //TODO: key and value projections can and should be pushed deeper into the stack
