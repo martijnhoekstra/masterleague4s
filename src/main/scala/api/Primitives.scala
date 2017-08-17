@@ -44,27 +44,17 @@ object Primitives {
     case Multiple  => throw new Exception("multiple elements where one was expected")
   }
 
-  def runSingleArray[F[_]: Async, A: Decoder, K, V](
-      uri: Uri @@ A,
-      tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
-
-    def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] =
-      for {
-        x <- UnfoldApiResult.singlePage(uri, time.sleep[F](waittime), option)
-      } yield
-        x.runFold(Map.empty[K, V])((m, page) => {
-          //TODO: key and value projections can and should be pushed deeper into the stack
-          page.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
-        })
+  def runWithToken[F[_]: Async, A](f: Option[Token] => ClientRunnable[F, F[A]],
+                                   tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]]): F[A] = {
 
     val runnable = tokenprovider match {
-      case None => gatherOption(None)
+      case None => f(None)
       case Some(tokenrunnable) => {
         tokenrunnable.flatMap((tokenstream: Stream[F, Token]) => {
 
-          val mappedtokens: Stream[F, ClientRunnable[F, F[Map[K, V]]]] = tokenstream.map(t => gatherOption(Some(t)))
-          val firstrunnable: F[ClientRunnable[F, F[Map[K, V]]]]        = trySingle(mappedtokens)
-          val clientliftable: HttpClient[F] => F[Map[K, V]] = (client) =>
+          val mappedtokens: Stream[F, ClientRunnable[F, F[A]]] = tokenstream.map(t => f(Some(t)))
+          val firstrunnable: F[ClientRunnable[F, F[A]]]        = trySingle(mappedtokens)
+          val clientliftable: HttpClient[F] => F[A] = (client) =>
             for {
               runnable <- firstrunnable
               map <- runnable.run(client)
@@ -81,6 +71,22 @@ object Primitives {
         requestCodec =
           spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(authorization.TokenAuthorization.headerCodec))
       .flatMap(client => runnable.run(client))
+  }
+
+  def runSingleArray[F[_]: Async, A: Decoder, K, V](
+      uri: Uri @@ A,
+      tokenprovider: Option[ClientRunnable[F, Stream[F, Token]]])(k: A => K, v: A => V): F[Map[K, V]] = {
+
+    def gatherOption(option: Option[Token]): ClientRunnable[F, F[Map[K, V]]] =
+      for {
+        x <- UnfoldApiResult.singlePage(uri, time.sleep[F](waittime), option)
+      } yield
+        x.runFold(Map.empty[K, V])((m, page) => {
+          //TODO: key and value projections can and should be pushed deeper into the stack
+          page.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
+        })
+
+    runWithToken(gatherOption, tokenprovider)
 
   }
 
@@ -97,30 +103,7 @@ object Primitives {
           page.results.foldLeft(m) { case (mm, a) => mm.updated(k(a), v(a)) }
         })
 
-    val runnable = tokenprovider match {
-      case None => gatherOption(None)
-      case Some(tokenrunnable) => {
-        tokenrunnable.flatMap((tokenstream: Stream[F, Token]) => {
-
-          val mappedtokens: Stream[F, ClientRunnable[F, F[Map[K, V]]]] = tokenstream.map(t => gatherOption(Some(t)))
-          val firstrunnable: F[ClientRunnable[F, F[Map[K, V]]]]        = trySingle(mappedtokens)
-          val clientliftable: HttpClient[F] => F[Map[K, V]] = (client) =>
-            for {
-              runnable <- firstrunnable
-              map <- runnable.run(client)
-            } yield map
-
-          ClientRunnable.lift(clientliftable)
-        })
-      }
-    }
-
-    //oh dear
-    http
-      .client[F](
-        requestCodec =
-          spinoco.protocol.http.codec.HttpRequestHeaderCodec.codec(authorization.TokenAuthorization.headerCodec))
-      .flatMap(client => runnable.run(client))
+    runWithToken(gatherOption, tokenprovider)
 
   }
 }
