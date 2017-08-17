@@ -1,6 +1,6 @@
-#Contributing
+# Contributing
 
-Thank you for considering contributing to this project!
+## Thank you for considering contributing to this project!
 
 Before a 1.0 release is ready, things should be understood to be in constant flux. What seems like a good idea today may
 not work out tomorrow, be ripped out, only to be re-introduced later in some other form, or forgotten in time and left to decay.
