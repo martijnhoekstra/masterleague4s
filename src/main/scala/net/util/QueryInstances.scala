@@ -18,10 +18,9 @@ object QueryInstances {
     }
     def show(q: Query) =
       q.params
-        .map(pair =>
-          pair match {
-            case (k, "") => k
-            case (k, v)  => s"$k=$v"
+        .map({
+          case (k, "") => k
+          case (k, v)  => s"$k=$v"
         })
         .mkString("?", "&", "")
 

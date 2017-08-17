@@ -45,16 +45,24 @@ object Api {
       case (user, pass) => authorize(user, pass)(ev)
     })(t => t._1, t => t._2)
 
-  def allTrounaments[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
-    runToMap(Endpoints.tournaments, credentials.map {
+  def fullCalendar[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runToMap(Endpoints.calendar, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t, t => t)
+
+  def allRegions[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runSingleArray(Endpoints.regions, credentials.map {
       case (user, pass) => authorize(user, pass)(ev)
     })(t => t._1, t => t._2)
 
-  //def fullCalendar[F[_]](credentials: Option[(String, String)] = None) =
-//    apiToList[F, CalendarEntryId](Endpoints.calendar, credentials)
+  def allPatches[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runSingleArray(Endpoints.patches, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
 
-  //def allRegions[F[_]: Async]       = runSingleArray[F, IdRegion](Endpoints.regions)
-  //def allPatches[F[_]: Async]       = runSingleArray[F, IdPatch](Endpoints.patches)
-  //def allBattlegrounds[F[_]: Async] = runSingleArray[F, IdBattleground](Endpoints.battlegrounds)
+  def allBattlegrounds[F[_]](credentials: Option[(String, String)] = None)(implicit ev: Async[F]) =
+    runSingleArray(Endpoints.battlegrounds, credentials.map {
+      case (user, pass) => authorize(user, pass)(ev)
+    })(t => t._1, t => t._2)
 
 }
