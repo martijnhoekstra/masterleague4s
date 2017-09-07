@@ -20,5 +20,8 @@ object Throttled {
   }
 }
 
-//login error:
-/*{"non_field_errors":["Unable to log in with provided credentials."]}*/
+/*
+ * login error:
+ * {"non_field_errors":["Unable to log in with provided credentials."]}
+ * (that's not "detail")
+ */

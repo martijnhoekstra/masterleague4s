@@ -1,13 +1,27 @@
 package masterleague4s
 
 object Runner {
-  import api.Api._
-  import fs2.Task
-  import DefaultResources._
+  //import api.Api._
+  //import fs2.Task
+  //import DefaultResources._
+  import com.typesafe.config.Config
+  import com.typesafe.config.ConfigFactory
 
   def main(args: Array[String]): Unit = {
-    //val credentials = Some(("user", "pass"))
-    val credentials = None
+    val config = ConfigFactory.load()
+
+    def getCredentials(config: Config) =
+      if (config.hasPath("credentials")) {
+        val credConfig = config.getConfig("credentials")
+        if (credConfig.hasPath("user") && credConfig.hasPath("pass"))
+          Some((credConfig.getString("user"), credConfig.getString("pass")))
+        else None
+      } else None
+
+    val ml4sconfig  = config.getConfig("masterleague4s")
+    val credentials = getCredentials(ml4sconfig)
+
+    println(credentials)
 
     //import spinoco.protocol.http
     //import spinoco.protocol.http.Uri
@@ -20,7 +34,6 @@ object Runner {
     //import fs2.Stream
     //import masterleague4s.net.authorization.Auth
     /*
-    val runnable = Auth.getToken[Task](Uri.parse("https://api.masterleague.net/auth/token/").require, "user", "pass")
 
     val tr = for {
       client <- spinoco.fs2.http.client[Task]()
@@ -44,15 +57,12 @@ object Runner {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, _) => s"Match #$id" }
     }) foreach println
-     */
-    /*
     println("PLAYERS:")
     (allPlayers[Task].unsafeAttemptRun match {
       case Left(err) => List(s"error: $err")
       case Right(m) => m.toList.map { case (id, player) => s"Player #$id is ${player.nickname}" }
     }) foreach println
-     */
-    /*
+
     val matchlist = allMatches[Task](credentials).unsafeAttemptRun match {
       case Left(err) => { println(err); List() }
       case Right(m) => m.toList.map(_._2)
@@ -66,7 +76,7 @@ object Runner {
     println("ETC in HGC Europe - Open Division")
     val tournystatsstats = masterleague4s.stats.Stats.forHeroInTourny(21l, 35l, matchlist)
     tournystatsstats.pretty.foreach(println)
-     */
+
 
     println("HEROES (Specialists):")
     import masterleague4s.net.filters._
@@ -81,7 +91,6 @@ object Runner {
 
     h foreach println
 
-    /*
     println("TEAMS:")
     (allTeams[Task](credentials).unsafeAttemptRun match {
       case Left(err) => {

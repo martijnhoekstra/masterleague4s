@@ -34,7 +34,7 @@ organization := "com.heroestools"
 
 publishArtifact in Test := false
 
-version := "0.0.4-SNAPSHOT"
+version := "0.0.5-SNAPSHOT"
 
 scalaVersion := "2.12.3"
 
@@ -99,6 +99,11 @@ val circeDependencies = List(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
+val configDependencies = List(
+  "com.typesafe" % "config" % "1.3.1"
+  //"com.github.pureconfig" %% "pureconfig" % "0.7.2"
+)
+
 val testDependencies = List(
   "org.specs2"                 %% "specs2-core"               % "3.9.4",
   "org.specs2"                 %% "specs2-scalacheck"         % "3.9.4",
@@ -128,4 +133,5 @@ libraryDependencies ++=
     matryoshkaDependencies ++
     catsDependencies ++
     simulacrumDependencies ++
+    configDependencies ++
     testDependencies
