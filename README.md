@@ -17,7 +17,7 @@ The current pre-release is version 0.0.3, released for scala 2.12.x only. Scala 
 Artifacts are published to Sonatype. Add the following line to your `build.sbt`:
 
 ```
-libraryDepenencies += "com.heroestools" %% "masterleague4s" % "0.0.3"
+libraryDepenencies += "com.heroestools" %% "masterleague4s" % "0.0.5"
 ```
 
 For Maven
@@ -26,14 +26,14 @@ For Maven
 <dependency>
     <groupId>com.heroestools</groupId>
     <artifactId>masterleague4s_2.12</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.5</version>
 </dependency>
 ```
 
 For Ivy
 
 ```
-<dependency org="com.heroestools" name="masterleague4s_2.12" rev="0.0.3" />
+<dependency org="com.heroestools" name="masterleague4s_2.12" rev="0.0.5" />
 ```
 
 And for the rest, well, you get the idea.
@@ -48,13 +48,13 @@ resolvers +=
  The latest snapshot release is 
  
  ```
-libraryDepenencies += "com.heroestools" %% "masterleague4s" % "0.0.4-SNAPSHOT"
+libraryDepenencies += "com.heroestools" %% "masterleague4s" % "0.0.6-SNAPSHOT"
 ```
  
 ## Documentation
 
-There is [Scaladoc](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.3/masterleague4s_2.12-0.0.3-javadoc.jar/!/masterleague4s/index.html).
-The "main" entrypoint for the API is [the API object in the api package](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.3/masterleague4s_2.12-0.0.3-javadoc.jar/!/masterleague4s/api/Api$.html),
+There is [Scaladoc](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.5/masterleague4s_2.12-0.0.5-javadoc.jar/!/masterleague4s/index.html).
+The "main" entrypoint for the API is [the API object in the api package](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.5/masterleague4s_2.12-0.0.5-javadoc.jar/!/masterleague4s/api/Api$.html),
 which can give you streaming results in an fs2 stream, or fully collected results in a `Map[Long -> Entry]`
 
 At the moment, the documentation is only types and method names, no explanation. In the very early days of this library the API
@@ -63,7 +63,7 @@ comprehensive doc.
 
 ## Java users
 
-On a best-effort basis we expose an API that is hopefully Java friendly. You can find this API as [the Api object in the javaapi package](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.3/masterleague4s_2.12-0.0.3-javadoc.jar/!/masterleague4s/javaapi/Api$.html)
+On a best-effort basis we expose an API that is hopefully Java friendly. You can find this API as [the Api object in the javaapi package](https://oss.sonatype.org/service/local/repositories/releases/archive/com/heroestools/masterleague4s_2.12/0.0.5/masterleague4s_2.12-0.0.5-javadoc.jar/!/masterleague4s/javaapi/Api$.html)
 
 ## License
 
