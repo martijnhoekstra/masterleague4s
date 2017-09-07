@@ -86,4 +86,38 @@ object UnfoldApiResult {
     }
     ClientRunnable.lift(run)
   }
+
+  def singlePage[F[_]: Catchable, A: Decoder](uri: Uri @@ A,
+                                              sleep: Stream[F, Unit],
+                                              token: Option[Token]): ClientRunnable[F, Stream[F, List[A]]] = {
+
+    implicit val bodyDecoder = circeDecoder[List[A]]
+
+    import spinoco.protocol.http.header.value.ContentType
+    import spinoco.protocol.http.header.value.MediaType
+
+    val r: HttpRequest[F] =
+      token.foldLeft(HttpRequest.get[F](uri))((req, tok) => req.appendHeader(authorization.Auth.authheader(tok)))
+
+    val one: HttpClient[F] => Stream[F, List[A]] = (client: HttpClient[F]) =>
+      for {
+        response <- (sleep >> client.request(r))
+        status = response.header.status
+        body <- {
+          if (status.isSuccess) Stream.eval(response.bodyAs[List[A]]).map(_.require)
+          else {
+            val textbody =
+              Stream.eval(response.withContentType(ContentType(MediaType.`text/plain`, None, None)).bodyAsString)
+            textbody.map(body => {
+              val error =
+                s"Unexpected network response: status ${status.code} - ${status.longDescription} CONTENTS: $body"
+              throw new Exception(error)
+            })
+          }
+        }
+      } yield body
+
+    ClientRunnable.lift(one)
+
+  }
 }

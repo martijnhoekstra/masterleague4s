@@ -5,6 +5,7 @@ dist/*
 target/
 lib_managed/
 src_managed/
+src/main/resources/application.conf
 project/boot/
 project/plugins/project/
 .history

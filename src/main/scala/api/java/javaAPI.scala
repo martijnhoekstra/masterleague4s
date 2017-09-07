@@ -1,7 +1,6 @@
 package masterleague4s
 package javaapi
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import fs2.Task
 import masterleague4s.data
@@ -10,15 +9,22 @@ import data._
 import Serialized._
 
 object Api {
-  import api.{Api => PlainApi}
+  import api.Api._
+  import DefaultResources._
 
-  private[this] val wait = 1.seconds
+  var userpass: Option[(String, String)] = None
+  def setCredentials(user: String, pass: String) = {
+    userpass = Some((user, pass))
+  }
 
-  private[this] def doUnspeakableJavaThingsM[A, B](t: Task[Either[scodec.Err, Map[Long, A]]], projection: A => B) =
-    t.unsafeRun.fold(
-      err => throw new Exception(err.message),
-      map => mapAsJavaMap(map.map { case (key, value) => (key, projection(value)) })
-    )
+  def clearCredentials() = {
+    userpass = None
+  }
+
+  private[this] def unsafeRunMap[A, B](t: Task[Map[Long, A]], projection: ((Long, A)) => B): java.util.Map[Long, B] = {
+    val smap = t.unsafeRun.map { case (key, value) => (key, projection((key, value))) }
+    mapAsJavaMap(smap)
+  }
 
   def asJavaPick(pick: PickF[Long, Long]) = pick match {
     case PickF(hero: Long, player: Long) => javaapi.Pick(hero, player)
@@ -86,21 +92,22 @@ object Api {
                    seqAsJavaList(matches.map(asJavaCalMatch)))
   }
 
-  def getMatches(): java.util.Map[Long, Match]  = doUnspeakableJavaThingsM(PlainApi.matches(wait), asJavaMatch)
-  def getHeroes(): java.util.Map[Long, Hero]    = doUnspeakableJavaThingsM(PlainApi.heroes(wait), asJavaHero)
-  def getPlayers(): java.util.Map[Long, Player] = doUnspeakableJavaThingsM(PlainApi.players(wait), asJavaPlayer)
+  def getMatches(): java.util.Map[Long, Match]  = unsafeRunMap(allMatches[Task](userpass), asJavaMatch)
+  def getHeroes(): java.util.Map[Long, Hero]    = unsafeRunMap(allHeroes[Task](userpass), asJavaHero)
+  def getPlayers(): java.util.Map[Long, Player] = unsafeRunMap(allPlayers[Task](userpass), asJavaPlayer)
+  def getTeams(): java.util.Map[Long, Team]     = unsafeRunMap(allTeams[Task](userpass), asJavaTeam)
   def getTournaments(): java.util.Map[Long, Tournament] =
-    doUnspeakableJavaThingsM(PlainApi.tournaments(wait), asJavaTournament)
+    unsafeRunMap(allTournaments[Task](userpass), asJavaTournament)
+  /*
   def getCalendar(): java.util.List[CalendarItem] =
     PlainApi
-      .calendar(wait)
+      .fullCalendar(userpass)
       .unsafeRun
       .fold(err => throw new Exception(err.message), list => seqAsJavaList(list.map(asJavaCal)))
-  def getTeams(): java.util.Map[Long, Team] = doUnspeakableJavaThingsM(PlainApi.teams(wait), asJavaTeam)
-
-  def getRegions(): java.util.Map[Long, Region] = doUnspeakableJavaThingsM(PlainApi.regions, asJavaRegion)
-  def getPatches(): java.util.Map[Long, Patch]  = doUnspeakableJavaThingsM(PlainApi.patches, asJavaPatch)
-  def getBattlegrounds(): java.util.Map[Long, GameMap] =
-    doUnspeakableJavaThingsM(PlainApi.battlegrounds, asJavaGameMap)
+   */
+  //def getRegions(): java.util.Map[Long, Region] = doUnspeakableJavaThingsM(PlainApi.allRegions[Task], asJavaRegion)
+  //def getPatches(): java.util.Map[Long, Patch]  = doUnspeakableJavaThingsM(PlainApi.allPatches[Task], asJavaPatch)
+  //def getBattlegrounds(): java.util.Map[Long, GameMap] =
+//    doUnspeakableJavaThingsM(PlainApi.allBattlegrounds[Task], asJavaGameMap)
 
 }
